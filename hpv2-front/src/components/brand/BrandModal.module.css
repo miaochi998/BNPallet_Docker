@@ -1,0 +1,68 @@
+/* 弹窗样式 */
+.modalContainer :global(.ant-upload-list-picture-card-container) {
+  width: 104px;
+  height: 104px;
+  margin-right: 8px;
+}
+
+.modalContainer :global(.ant-upload-select) {
+  width: 104px;
+  height: 104px;
+}
+
+.brandForm {
+  text-align: center;
+}
+
+.formItem {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.uploadContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploadNote {
+  text-align: center;
+  color: #666;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+:global(.ant-upload-select) {
+  margin: 0 auto;
+}
+
+:global(.ant-form-item-label) {
+  text-align: center !important;
+}
+
+/* 新增品牌Logo上传区域样式 */
+.logoUpload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.logoUpload :global(.ant-upload) {
+  margin: 0 auto;
+}
+
+.logoUpload :global(.ant-upload-wrapper) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.uploadTip, .uploadHint {
+  text-align: center;
+  color: #666;
+  margin-top: 8px;
+  font-size: 12px;
+} 

@@ -1,0 +1,110 @@
+.dashboard {
+  width: 100%;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+/* 错误提示样式 */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  gap: 16px;
+}
+
+/* 信息卡片样式 */
+.infoCard {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  height: 100%;
+  transition: all 0.3s;
+}
+
+.infoCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* 个人信息样式 */
+.profileContainer {
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.avatar {
+  background-color: #f56a00;
+  margin-right: 24px;
+}
+
+.userInfo {
+  flex: 1;
+}
+
+.infoItem {
+  margin-bottom: 12px;
+  display: flex;
+}
+
+.infoItem strong {
+  margin-right: 8px;
+  min-width: 80px;
+  display: inline-block;
+}
+
+/* 统计数据样式 */
+.statsItem {
+  margin-bottom: 12px;
+  display: flex;
+}
+
+.statsItem strong {
+  margin-right: 8px;
+  min-width: 120px;
+  display: inline-block;
+}
+
+.palletStats, .adminStats, .userStats {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+/* 按钮样式 */
+.actionButtons {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.secondButton {
+  background-color: #52c41a;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .infoCard {
+    margin-bottom: 16px;
+  }
+  
+  .profileContainer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .avatar {
+    margin-bottom: 16px;
+    margin-right: 0;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+} 

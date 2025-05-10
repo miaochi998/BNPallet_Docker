@@ -1,0 +1,493 @@
+/* ProductGrid样式的复用，适配回收站页面 */
+.recyclebin-product-grid-container {
+  width: 100%;
+  background-color: #fff;
+  border-radius: 4px;
+  overflow: hidden; /* 避免溢出 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 表头样式 */
+.recyclebin-product-grid-header {
+  display: grid;
+  min-width: 100%;
+  width: auto;
+  grid-template-columns: 
+    40px               /* 选择 */
+    50px               /* 序号 - 减小宽度 */
+    100px              /* 图片 - 保持足够宽度 */
+    minmax(150px, 1fr) /* 名称 - 可伸缩 */
+    120px              /* 品牌 */
+    120px              /* 货号 */
+    minmax(120px, 1fr) /* 规格 - 可伸缩 */
+    minmax(100px, 0.8fr) /* 净含量 - 可伸缩 */
+    minmax(120px, 0.8fr) /* 产品尺寸 - 可伸缩 */
+    minmax(120px, 0.8fr) /* 装箱方式 - 可伸缩 */
+    minmax(120px, 0.8fr) /* 装箱规格 - 可伸缩 */
+    minmax(120px, 1fr) /* 装箱尺寸 - 可伸缩 */
+    180px              /* 价格档位 */
+    80px               /* 素材包 */
+    80px               /* 产品链接 */
+    80px               /* 还原 */
+    80px;              /* 删除 */
+  background-color: #e6f7ff; /* 淡蓝色背景 */
+  border-top: 1px solid #e8e8e8; /* 恢复边框，不使用伪元素 */
+  border-left: 1px solid #e8e8e8; /* 恢复边框，不使用伪元素 */
+  font-weight: 500;
+  position: sticky; /* 使表头保持固定位置 */
+  top: 0;
+  z-index: 20;
+  box-sizing: border-box; /* 确保边框计算在内 */
+}
+
+/* 创建一个滚动容器，包含表头和表格主体 */
+.recyclebin-product-grid-scroll-container {
+  overflow-x: auto;
+  width: 100%;
+  position: relative;
+}
+
+/* 设置滚动内容的容器，确保它与内容一样宽 */
+.recyclebin-product-grid-content {
+  display: inline-block;
+  min-width: 100%;
+}
+
+/* 表格内容区域 */
+.recyclebin-product-grid-body {
+  width: 100%;
+  min-height: 100px;
+}
+
+/* 数据行 */
+.recyclebin-product-grid-row {
+  display: grid;
+  min-width: 100%; 
+  width: auto;
+  grid-template-columns: 
+    40px               /* 选择 */
+    50px               /* 序号 - 减小宽度 */
+    100px              /* 图片 - 保持足够宽度 */
+    minmax(150px, 1fr) /* 名称 - 可伸缩 */
+    120px              /* 品牌 */
+    120px              /* 货号 */
+    minmax(120px, 1fr) /* 规格 - 可伸缩 */
+    minmax(100px, 0.8fr) /* 净含量 - 可伸缩 */
+    minmax(120px, 0.8fr) /* 产品尺寸 - 可伸缩 */
+    minmax(120px, 0.8fr) /* 装箱方式 - 可伸缩 */
+    minmax(120px, 0.8fr) /* 装箱规格 - 可伸缩 */
+    minmax(120px, 1fr) /* 装箱尺寸 - 可伸缩 */
+    180px              /* 价格档位 */
+    80px               /* 素材包 */
+    80px               /* 产品链接 */
+    80px               /* 还原 */
+    80px;              /* 删除 */
+  border-bottom: 1px solid #e8e8e8; /* 恢复底部边框，不使用伪元素 */
+  transition: background-color 0.3s;
+  box-sizing: border-box; /* 确保边框计算在内 */
+  position: relative;
+}
+
+/* 偶数行背景色设置 */
+.recyclebin-product-grid-row:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* 鼠标悬停效果 */
+.recyclebin-product-grid-row:hover {
+  background-color: #f5f7fa;
+}
+
+/* 单元格通用样式 */
+.recyclebin-grid-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border-right: 1px solid #e8e8e8;
+  min-height: 56px;
+  word-break: break-word;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box; /* 确保边框被包含在宽度内 */
+}
+
+/* 为选择列添加左边框 */
+.recyclebin-grid-col-select {
+  border-left: 1px solid #e8e8e8; /* 直接添加左边框 */
+  justify-content: center;
+}
+
+/* 表头单元格 */
+.recyclebin-product-grid-header .recyclebin-grid-col {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 价格档位单元格 - 移除padding */
+.recyclebin-grid-col-price-tier {
+  padding: 0;
+  height: 100%; /* 确保高度填满行 */
+  display: flex;
+  align-items: center; /* 垂直居中 */
+}
+
+/* 确保表头中价格档位文字垂直居中 */
+.recyclebin-product-grid-header .recyclebin-grid-col-price-tier {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+/* 价格档位单元格内的容器也应该填满高度 */
+.recyclebin-grid-col-price-tier .recyclebin-price-tiers-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 使容器填充可用空间 */
+  height: auto; /* 确保容器高度自适应内容 */
+  min-height: 100%; /* 确保至少填满父容器 */
+}
+
+/* 确保价格档位行能自适应内容高度 */
+.recyclebin-price-tier-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid #f0f0f0;
+  flex: 0 0 auto; /* 高度由内容决定 */
+  min-height: 32px; /* 设置最小高度 */
+  align-items: stretch; /* 使子元素填充整个高度 */
+  height: auto; /* 高度自适应内容 */
+}
+
+/* 确保最后一行没有底部边框 */
+.recyclebin-price-tier-row:last-child {
+  border-bottom: none;
+}
+
+/* 当只有一行价格档位时，确保其填满容器 */
+.recyclebin-price-tiers-container:only-child .recyclebin-price-tier-row:only-child {
+  flex-grow: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* 当只有一行时，确保子元素也居中 */
+.recyclebin-price-tiers-container:only-child .recyclebin-price-tier-row:only-child .recyclebin-tier-qty,
+.recyclebin-price-tiers-container:only-child .recyclebin-price-tier-row:only-child .recyclebin-tier-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* 文字溢出处理 */
+.recyclebin-grid-col-name {
+  white-space: normal; /* 允许内容换行 */
+  overflow: hidden; /* 确保不会溢出容器 */
+  word-break: break-word; /* 添加自动换行 */
+  max-width: 150px; /* 在小屏幕下保持最大宽度限制 */
+  width: 100%; /* 确保占满分配的空间 */
+  text-overflow: initial; /* 覆盖父类的text-overflow值 */
+  box-sizing: border-box; /* 确保padding不会增加宽度 */
+}
+
+.recyclebin-grid-col-spec,
+.recyclebin-grid-col-content,
+.recyclebin-grid-col-size,
+.recyclebin-grid-col-shipping,
+.recyclebin-grid-col-ship-spec,
+.recyclebin-grid-col-ship-size {
+  white-space: normal; /* 允许内容换行 */
+  overflow: visible; /* 允许内容可见 */
+  word-break: break-word; /* 添加自动换行 */
+  width: 100%; /* 确保占满分配的空间 */
+  box-sizing: border-box; /* 确保padding不会增加宽度 */
+}
+
+/* 价格档位样式 */
+.recyclebin-price-tiers-container {
+  width: 100%;
+  height: 100%; /* 使高度自适应父容器 */
+  overflow-y: auto;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* 从顶部开始排列 */
+}
+
+.recyclebin-price-tiers-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background-color: #f0f0f0;
+  font-weight: 500;
+  border-bottom: 1px solid #e8e8e8;
+  min-height: 32px; /* 确保最小高度 */
+}
+
+.recyclebin-tier-qty-header,
+.recyclebin-tier-price-header {
+  padding: 4px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.recyclebin-tier-qty-header {
+  border-right: 1px solid #e8e8e8;
+}
+
+.recyclebin-tier-qty,
+.recyclebin-tier-price {
+  padding: 4px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px; /* 最小高度确保基本显示 */
+  height: 100%; /* 使其填充父容器高度 */
+  word-break: break-word; /* 确保文本可以换行 */
+  white-space: normal; /* 确保文本可以换行 */
+  overflow: hidden; /* 确保内容不会溢出 */
+}
+
+.recyclebin-tier-qty {
+  border-right: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.recyclebin-price-tier-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 56px;
+  color: #bfbfbf;
+  font-size: 12px;
+}
+
+/* 修改图片列的宽度，确保图片区域足够宽 */
+.recyclebin-grid-col-image {
+  width: 100px; /* 与ProductGrid保持一致的宽度 */
+  padding: 10px; /* 统一的内边距 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* 产品图片容器 */
+.recyclebin-product-image-container {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  margin: 0 auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f0f0f0;
+}
+
+/* 产品图片样式 */
+.recyclebin-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+/* 图片悬停放大效果 */
+.recyclebin-product-image-container:hover .recyclebin-product-image {
+  transform: scale(1.05);
+}
+
+/* 图片悬停时的遮罩层和图标 */
+.recyclebin-image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 12px;
+  text-align: center;
+  padding: 2px 0;
+  transform: translateY(100%);
+  transition: transform 0.3s;
+}
+
+/* 悬停时显示遮罩 */
+.recyclebin-product-image-container:hover .recyclebin-image-overlay {
+  transform: translateY(0);
+}
+
+/* 无图片时的占位元素 */
+.recyclebin-product-image-placeholder {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  color: #999;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* 媒体查询优化 */
+@media screen and (max-width: 1440px) {
+  .recyclebin-product-grid-container {
+    overflow-x: auto; /* 确保容器可以水平滚动 */
+  }
+  
+  /* 移除自动调整滚动容器最小宽度的设置 */
+  .recyclebin-product-grid-scroll-container {
+    overflow-x: auto; /* 确保容器可以水平滚动 */
+  }
+  
+  /* 设置内容最小宽度，确保它不会被挤压 */
+  .recyclebin-product-grid-content {
+    min-width: max-content; /* 确保内容至少和其所需空间一样宽 */
+  }
+  
+  .recyclebin-product-grid-header,
+  .recyclebin-product-grid-row {
+    grid-template-columns: 
+      40px               /* 选择 */
+      50px               /* 序号 - 减小宽度 */
+      100px              /* 图片 - 保持足够宽度 */
+      minmax(150px, 1fr) /* 名称 - 可伸缩 */
+      120px              /* 品牌 */
+      120px              /* 货号 */
+      minmax(120px, 1fr) /* 规格 - 可伸缩 */
+      minmax(100px, 0.8fr) /* 净含量 - 可伸缩 */
+      minmax(120px, 0.8fr) /* 产品尺寸 - 可伸缩 */
+      minmax(120px, 0.8fr) /* 装箱方式 - 可伸缩 */
+      minmax(120px, 0.8fr) /* 装箱规格 - 可伸缩 */
+      minmax(120px, 1fr) /* 装箱尺寸 - 可伸缩 */
+      180px              /* 价格档位 */
+      80px               /* 素材包 */
+      80px               /* 产品链接 */
+      80px               /* 还原 */
+      80px;              /* 删除 */
+  }
+}
+
+@media screen and (min-width: 1441px) {
+  .recyclebin-product-grid-header,
+  .recyclebin-product-grid-row {
+    /* 更宽屏幕下使用类似的网格布局，但允许部分列有更大空间 */
+    grid-template-columns: 
+      40px               /* 选择 */
+      50px               /* 序号 - 减小宽度 */
+      100px              /* 图片 - 保持足够宽度 */
+      minmax(200px, 1.5fr) /* 名称 - 可伸缩 */
+      minmax(120px, 1fr) /* 品牌 */
+      minmax(120px, 1fr) /* 货号 */
+      minmax(150px, 1.2fr) /* 规格 - 可伸缩 */
+      minmax(120px, 1fr) /* 净含量 - 可伸缩 */
+      minmax(150px, 1.2fr) /* 产品尺寸 - 可伸缩 */
+      minmax(150px, 1.2fr) /* 装箱方式 - 可伸缩 */
+      minmax(150px, 1.2fr) /* 装箱规格 - 可伸缩 */
+      minmax(150px, 1.2fr) /* 装箱尺寸 - 可伸缩 */
+      180px              /* 价格档位 */
+      80px               /* 素材包 */
+      80px               /* 产品链接 */
+      80px               /* 还原 */
+      80px;              /* 删除 */
+  }
+  
+  .recyclebin-grid-col-name {
+    max-width: unset;
+    font-size: 14px;
+  }
+}
+
+/* 滚动条样式 */
+.recyclebin-product-grid-container::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.recyclebin-product-grid-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+
+.recyclebin-product-grid-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 5px;
+}
+
+.recyclebin-product-grid-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 价格档位滚动条样式 */
+.recyclebin-price-tiers-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.recyclebin-price-tiers-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.recyclebin-price-tiers-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.recyclebin-price-tiers-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 确保表头中的"价格档位"垂直居中 */
+.recyclebin-product-grid-header .recyclebin-grid-col.recyclebin-grid-col-price-tier {
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+/* 修改价格档位容器在数据行中的样式 */
+.recyclebin-product-grid-row .recyclebin-grid-col.recyclebin-grid-col-price-tier {
+  display: flex;
+  align-items: flex-start; /* 确保内容从顶部开始排列 */
+  padding: 0;
+  height: auto; /* 确保高度自适应内容 */
+}
+
+.recyclebin-no-material,
+.recyclebin-no-url {
+  color: #bfbfbf;
+  font-size: 12px;
+}
+
+/* 分页控件容器 */
+.recyclebin-product-grid-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding: 0 16px 16px;
+}
+
+/* 空数据状态 */
+.recyclebin-product-grid-empty {
+  text-align: center;
+  padding: 48px 0;
+  color: #999;
+} 

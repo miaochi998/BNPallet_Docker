@@ -1,0 +1,102 @@
+.container {
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+}
+
+.addProductBtn {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  color: white;
+}
+
+.addProductBtn:hover {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  color: white;
+}
+
+.shareBtn {
+  background-color: #67c23a;
+  color: white;
+}
+
+.shareBtn:hover {
+  background-color: #85ce61;
+  color: white;
+}
+
+/* 图片预览模态框样式 */
+:global(.product-image-preview-modal) {
+  z-index: 1001;
+}
+
+:global(.product-image-preview-modal .ant-modal-body) {
+  padding: 0;
+  background: #f0f0f0;
+}
+
+:global(.product-image-preview-modal .ant-modal-close) {
+  color: rgba(0, 0, 0, 0.65);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+}
+
+:global(.product-image-preview-modal .ant-modal-close:hover) {
+  color: #1890ff;
+  background: white;
+}
+
+/* 产品表单弹窗样式 */
+.productFormModal :global(.ant-modal-content) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.closeModalIcon {
+  font-size: 32px;
+  color: #333;
+  position: absolute;
+  top: -2px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* 适配表单图片上传区域 */
+:global(.ant-upload-list-picture-card .ant-upload-list-item-info::before) {
+  left: 0;
+}
+
+/* 调整操作按钮间距 */
+:global(.ant-space-align-center) {
+  gap: 4px !important;
+}
+

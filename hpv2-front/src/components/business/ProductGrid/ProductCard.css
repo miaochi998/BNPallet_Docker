@@ -1,0 +1,235 @@
+.product-card {
+  position: relative;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #f0f0f0;
+}
+
+.product-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.product-card-image {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.product-card-image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  transform: translateY(100%);
+  transition: transform 0.3s;
+}
+
+.product-card-image:hover .product-card-image-overlay {
+  transform: translateY(0);
+}
+
+.product-card-image-placeholder {
+  width: 100%;
+  height: 180px;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.product-card-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.product-card-name {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.5;
+  min-height: 44px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  display: block;
+}
+
+.product-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.product-card-info-item {
+  display: flex;
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 24px;
+  align-items: flex-start;
+}
+
+.product-card-label {
+  color: #666;
+  width: 70px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.product-card-value {
+  color: #333;
+  flex: 1;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.product-card-price {
+  margin-top: auto;
+  font-size: 18px;
+  font-weight: 500;
+  color: #ff4d4f;
+  text-align: center;
+}
+
+/* 价格档位样式 */
+.product-card-price-tiers {
+  margin-top: auto;
+  margin-bottom: 10px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-price-title {
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  padding: 8px;
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+
+.product-card-price-header {
+  display: flex;
+  background-color: #f5f7fa;
+  font-size: 12px;
+  color: #666;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.price-tier-qty-header, .price-tier-price-header {
+  flex: 1;
+  padding: 8px 10px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.price-tier-qty-header {
+  border-right: 1px solid #f0f0f0;
+}
+
+.product-card-price-rows {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-price-row {
+  display: flex;
+  font-size: 13px;
+  color: #333;
+  width: 100%;
+}
+
+.product-card-price-row:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.price-tier-qty, .price-tier-price {
+  flex: 1;
+  padding: 8px 10px;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.price-tier-qty {
+  border-right: 1px solid #f0f0f0;
+}
+
+.price-tier-price {
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+.product-card-price-empty {
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+  padding: 10px;
+  margin-top: auto;
+  margin-bottom: 10px;
+}
+
+.product-card-footer {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  border-top: 1px solid #f5f5f5;
+  background-color: #fafafa;
+}
+
+.product-card-action-btn {
+  padding: 0;
+  height: auto;
+  width: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-card-action-btn .anticon {
+  font-size: 16px;
+}
+
+/* 移除不再使用的样式 */
+.product-card-material-btn,
+.product-card-no-material,
+.product-card-recycle-btn {
+  display: none;
+} 

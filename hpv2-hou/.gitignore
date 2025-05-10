@@ -1,0 +1,11 @@
+# 忽略上传文件和日志
+src/uploads/
+src/logs/
+logs/
+temp/
+node_modules/
+.DS_Store
+.env
+admin.token
+.roo/
+.roomodes

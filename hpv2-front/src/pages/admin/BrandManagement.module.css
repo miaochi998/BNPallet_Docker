@@ -1,0 +1,150 @@
+.brandManagement {
+  padding: 24px;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.filterGroup {
+  margin-right: 8px;
+}
+
+.refreshButton {
+  margin-right: 8px;
+}
+
+.pagination {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  position: relative;
+  min-height: 70px;
+  overflow: visible !important;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+.brandCard {
+  position: relative;
+  height: 100%;
+  transition: all 0.3s;
+}
+
+.brandCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logoContainer {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  background-color: #f5f5f5;
+}
+
+.brandLogo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholderLogo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1890ff;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.brandInfo {
+  text-align: center;
+  width: 100%;
+}
+
+.brandName {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusSwitch {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .pagination {
+    text-align: center;
+  }
+}
+
+/* 确保下拉菜单能够正确显示 */
+:global(.ant-select-dropdown) {
+  position: fixed !important;
+  z-index: 1500 !important;
+}
+
+:global(.ant-pagination-options) {
+  overflow: visible !important;
+}
+
+/* 设置内容区域，确保有足够空间显示分页组件 */
+.content {
+  position: relative;
+  padding-bottom: 80px; /* 为分页组件预留空间 */
+  overflow: visible;
+} 

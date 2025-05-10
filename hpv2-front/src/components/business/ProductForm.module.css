@@ -1,0 +1,416 @@
+.productForm {
+  background-color: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.formTitle {
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.formActions {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.submitBtn {
+  width: 100%;
+  height: 40px;
+  font-size: 16px;
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+.submitBtn:hover {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+/* 分区标题样式 */
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 20px 0 10px;
+  color: #333;
+}
+
+/* 价格档位样式 */
+.priceTierHeader {
+  display: flex;
+  margin-bottom: 6px;
+  color: #666;
+}
+
+.priceTierLabel {
+  flex: 1;
+  padding: 0 8px;
+  font-weight: 500;
+}
+
+.priceTierAction {
+  width: 90px;
+}
+
+.priceTierItem {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.priceTierField {
+  flex: 1;
+  margin-bottom: 0;
+  margin-right: 12px;
+}
+
+.priceTierButtons {
+  display: flex;
+  width: 90px;
+  justify-content: flex-start;
+  align-items: center;
+  position: relative;
+  top: -5px;
+}
+
+.priceTierAddBtn,
+.priceTierRemoveBtn {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  max-width: 20px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  border-radius: 4px;
+  background-color: transparent;
+  line-height: 0;
+}
+
+.priceTierAddBtn {
+  color: #1890ff;
+  border-color: #1890ff;
+  background-color: transparent;
+}
+
+.priceTierAddBtn:hover,
+.priceTierAddBtn:focus {
+  color: #40a9ff;
+  border-color: #40a9ff;
+  background-color: transparent;
+}
+
+.priceTierRemoveBtn {
+  color: #ff4d4f;
+  border-color: #ff4d4f;
+  background-color: transparent;
+}
+
+.priceTierRemoveBtn:hover,
+.priceTierRemoveBtn:focus {
+  color: #ff7875;
+  border-color: #ff7875;
+  background-color: transparent;
+}
+
+.priceTierAddBtn :global(.anticon),
+.priceTierRemoveBtn :global(.anticon) {
+  font-size: 12px;
+}
+
+/* 无价格档位时的样式 */
+.noPriceTiers {
+  text-align: center;
+  padding: 15px 0;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  background-color: #fafafa;
+  margin-bottom: 15px;
+}
+
+.noPriceTiers button {
+  color: #8BC34A;
+  border-color: #8BC34A;
+}
+
+.noPriceTiers button:hover {
+  color: #7CB342;
+  border-color: #7CB342;
+}
+
+/* 上传区域样式 */
+.uploadsContainer {
+  margin-top: 20px;
+}
+
+.uploadSection {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  height: 320px;
+}
+
+.uploadSection h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.uploadBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 260px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+  position: relative;
+  padding: 10px;
+}
+
+.uploadContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+}
+
+.productImageUpload,
+.materialUpload {
+  width: 160px;
+  text-align: center;
+}
+
+.uploadPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.uploadImageIcon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%231890ff"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-1.96-2.36L6.5 17h11l-3.54-4.71z"/></svg>');
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+}
+
+.uploadMaterialIcon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%231890ff"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/><path d="M15 13l-4 4h8v-4z"/><path d="M13 9l-4-4v8l4-4z"/></svg>');
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+}
+
+.fileName {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 3px 0;
+  padding: 0 5px;
+  color: #333;
+  font-size: 13px;
+  word-break: break-all;
+  max-height: 40px;
+  overflow-y: auto;
+}
+
+/* 上传组件与提示文字间的固定距离 */
+:global(.ant-upload.ant-upload-select-picture-card),
+:global(.ant-upload-list-item-container) {
+  margin-bottom: 15px !important;
+}
+
+.uploadTips {
+  text-align: center;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  padding: 6px 0;
+  font-size: 13px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: auto;
+}
+
+.uploadTips p {
+  margin-bottom: 0;
+  font-size: 14px;
+  color: #666;
+  display: inline;
+}
+
+.uploadTips p:not(:last-child)::after {
+  content: " ";
+  margin: 0 5px;
+}
+
+/* 覆盖 Ant Design 默认上传组件样式 */
+:global(.ant-upload-list-item-container) {
+  width: 160px !important;
+  height: 160px !important;
+  margin: 0 auto 20px !important;
+}
+
+:global(.ant-upload-list) {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+:global(.ant-upload-list-picture-card) {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+:global(.ant-upload.ant-upload-select-picture-card) {
+  width: 160px !important;
+  height: 160px !important;
+  margin: 0 auto 20px !important;
+  border: 1px dashed #d9d9d9;
+  background-color: #fafafa;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+:global(.ant-upload-list-item) {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  width: 160px !important;
+  height: 160px !important;
+}
+
+:global(.ant-upload-list-item-info) {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+:global(.ant-upload-list-item-name) {
+  display: none !important;
+}
+
+:global(.ant-upload-list-item-thumbnail) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+:global(.ant-upload-list-item-card-actions) {
+  opacity: 0 !important;
+  z-index: 20 !important;
+}
+
+:global(.ant-upload-list-item):hover :global(.ant-upload-list-item-card-actions) {
+  opacity: 1 !important;
+}
+
+:global(.ant-upload-list-item-image) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+:global(.ant-upload-list-item-file) {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 自定义文件图标 */
+:global(.ant-upload-list-item-icon) {
+  font-size: 36px !important;
+  color: #1890ff !important;
+}
+
+/* 动态添加Form.Item的错误样式修复 */
+:global(.ant-form-item-explain-error) {
+  font-size: 12px;
+}
+
+/* 表单项样式 */
+:global(.ant-form-item) {
+  margin-bottom: 12px;
+}
+
+:global(.ant-form-item-label > label) {
+  font-weight: 500;
+  color: #333;
+  height: 22px;
+  margin-bottom: 2px;
+}
+
+:global(.ant-input),
+:global(.ant-select-selector) {
+  height: 32px !important;
+}
+
+:global(.ant-select-selection-search-input) {
+  height: 30px !important;
+}
+
+:global(.ant-select-selection-item) {
+  line-height: 30px !important;
+}
+
+:global(.ant-input-affix-wrapper) {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* 覆盖 Ant Design 默认按钮样式 */
+:global(.ant-btn-primary) {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+:global(.ant-btn-primary:hover),
+:global(.ant-btn-primary:focus) {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+/* 弹窗关闭按钮位置修正 */
+:global(.ant-modal-close) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  padding: 0;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.ant-modal-close-x) {
+  width: 54px;
+  height: 54px;
+  line-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.anticon-close) {
+  font-size: 16px;
+} 

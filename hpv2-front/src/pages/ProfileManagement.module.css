@@ -1,0 +1,367 @@
+/* 全局样式覆盖，确保头像显示为圆形且没有边框和背景 */
+:global(.ant-upload.ant-upload-select-picture-card) {
+  border: none !important;
+  background: transparent !important; /* 确保背景透明 */
+  overflow: visible !important;
+  width: 120px !important;
+  height: 120px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 进一步确保上传组件及其内部元素没有背景色和边框 */
+:global(.ant-upload-wrapper .ant-upload-select) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:global(.ant-upload-wrapper .ant-upload-select-picture-card) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:global(.ant-upload-wrapper .ant-upload-list .ant-upload-list-item-container) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:global(.ant-upload-wrapper .ant-upload-list) {
+  background: transparent !important;
+}
+
+:global(.ant-upload-wrapper .ant-upload-btn) {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* 确保上传列表容器样式正确 */
+:global(.ant-upload-wrapper) :global(.ant-upload-list) :global(.ant-upload-list-item-container) {
+  width: 120px !important;
+  height: 120px !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+/* 确保图片容器不会溢出隐藏 */
+:global(.ant-upload-wrapper) :global(.ant-upload-list) {
+  overflow: visible !important;
+}
+
+/* 确保上传组件内部的内容正确显示 */
+:global(.ant-upload-wrapper) :global(.ant-upload) :global(.ant-upload-btn) {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.profileContainer {
+  padding: 20px;
+  width: 100%;
+}
+
+.pageTitle {
+  margin-bottom: 24px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.avatarUpload {
+  position: relative;
+  margin-bottom: 10px;
+  width: 120px; /* 确保容器宽度足够 */
+  height: 120px; /* 确保容器高度足够 */
+}
+
+.avatarUpload :global(.ant-upload) {
+  width: 120px !important;
+  height: 120px !important;
+  border-radius: 50%;
+  overflow: visible !important; /* 改为visible，防止溢出隐藏 */
+  cursor: pointer;
+  border: none !important; /* 去掉边框 */
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.avatarUpload img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+}
+
+.cameraIcon {
+  font-size: 24px;
+}
+
+.avatarOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 50%;
+  z-index: 1; /* 确保覆盖层在上面 */
+}
+
+.avatarUpload:hover .avatarOverlay {
+  opacity: 1;
+}
+
+.formSection {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 4px;
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.profileForm {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.passwordContainer {
+  border: 1px dashed #eee;
+  padding: 20px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.passwordRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.passwordCol {
+  flex: 1;
+  min-width: 0;
+}
+
+.passwordForm {
+  width: 100%;
+}
+
+.passwordFormItem {
+  margin-bottom: 32px !important;
+  position: relative;
+}
+
+.passwordFormItem :global(.ant-form-item-label) {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.passwordFormItem :global(.ant-form-item-control-input) {
+  width: 100%;
+}
+
+.passwordFormItem :global(.ant-input-affix-wrapper) {
+  width: 100%;
+}
+
+.passwordFormItem :global(.ant-form-item-explain) {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.passwordFormItem:last-child {
+  margin-bottom: 0 !important;
+}
+
+.passwordButton {
+  width: 100%;
+}
+
+.storeSection {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.storeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.storeTitle {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.qrcodeSection {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.qrcodeTitle {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.qrcodeUpload {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.qrcodePreview {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 16px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.qrcodePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qrcodeImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qrcodeHint {
+  color: #888;
+  font-size: 12px;
+  text-align: center;
+}
+
+.submitSection {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.submitButton {
+  width: 120px;
+}
+
+.modalButtonGroup {
+  text-align: right;
+}
+
+.modalCancelButton {
+  margin-right: 8px;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .formSection {
+    padding: 16px;
+  }
+  
+  .avatarUpload :global(.ant-upload) {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+  }
+  
+  .qrcodePreview {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+.profileFormRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.profileFormCol {
+  flex: 1;
+  min-width: 0;
+}
+
+.profileFormCol :global(.ant-form-item) {
+  margin-bottom: 24px;
+}
+
+.profileFormCol :global(.ant-form-item-with-help) {
+  margin-bottom: 36px !important;
+}
+
+.singleLine {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.storeTable {
+  margin-bottom: 24px;
+}
+
+.storeTable :global(.ant-table-cell-fix-right) {
+  background: #fff;
+}
+
+.storeTable :global(.ant-table-row:hover .ant-table-cell) {
+  background-color: #f5f5f5;
+}
+
+.storeTable :global(.ant-form-item-explain) {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.storeTable :global(.ant-form-item-has-error .ant-input) {
+  border-color: #ff4d4f;
+} 

@@ -1,0 +1,78 @@
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  position: relative; /* 确保相对定位 */
+}
+
+.data-table {
+  width: 100%;
+}
+
+/* 分页区域样式 */
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 16px;
+  padding: 8px 0;
+  min-height: 64px; /* 增加最小高度，确保下拉菜单有足够空间 */
+  position: relative; /* 添加相对定位 */
+  overflow: visible !important; /* 确保内容溢出可见 */
+}
+
+/* 覆盖Ant Design下拉菜单样式，确保完全显示 */
+.ant-select-dropdown {
+  z-index: 1050 !important; /* 提高下拉菜单的z-index */
+}
+
+.ant-select-dropdown-placement-bottomLeft {
+  left: auto !important; /* 防止被固定位置 */
+}
+
+/* 确保分页部分的下拉菜单可见 */
+.pagination-container .ant-select {
+  position: relative !important;
+}
+
+.pagination-container .ant-pagination {
+  overflow: visible !important;
+}
+
+.pagination-container .ant-pagination-options {
+  overflow: visible !important;
+  margin-left: 16px;
+  height: auto;
+}
+
+/* 确保分页选择器足够宽 */
+.pagination-container .ant-pagination-options-size-changer {
+  min-width: 110px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .pagination-container {
+    justify-content: center;
+  }
+}
+
+/* 空数据展示样式 */
+.ant-empty-description {
+  color: #999;
+}
+
+/* 表头样式 */
+.data-table .ant-table-thead > tr > th {
+  background-color: #f7f9fc;
+  font-weight: 500;
+}
+
+/* hover状态 */
+.data-table .ant-table-tbody > tr:hover > td {
+  background-color: #f0f8ff;
+}
+
+/* 加载状态 */
+.data-table .ant-spin-nested-loading {
+  width: 100%;
+} 

@@ -1,0 +1,1293 @@
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Button, Input, Select, Typography, message, App, Modal, Spin } from 'antd';
+import { PlusOutlined, ShareAltOutlined, DownloadOutlined, EyeOutlined, DeleteOutlined, EditOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
+import request from '@/utils/request';
+import DataTable from '@/components/common/DataTable';
+import styles from './ProductManagement.module.css';
+import { commonSearch } from '@/api/common';
+import { getImageUrl, getApiBaseUrl } from '@/config/urls';
+import ProductForm from '@/components/business/ProductForm';
+
+const { Title } = Typography;
+const { Option } = Select;
+
+// 创建独立于组件的函数，避免循环引用
+const createProductFetcher = (setLoading, setIsSearching, setProducts, setPagination, message, ownerType, processProductData) => {
+  return async (page, pageSize, keyword, brandId, sortField, sortOrder) => {
+    setLoading(true);
+    
+    try {
+      // 判断是否为搜索模式
+      const isSearchMode = keyword && keyword.trim() !== '';
+      setIsSearching(isSearchMode);
+
+      // 构建通用的查询参数
+      const commonParams = {
+        sort_field: sortField,
+        sort_order: sortOrder,
+        with_price_tiers: true,
+        with_attachments: true,
+        owner_type: ownerType
+      };
+
+      // 添加品牌筛选参数（如果有）
+      if (brandId !== null && brandId !== undefined && !isNaN(brandId)) {
+        commonParams.brand_id = brandId;
+      }
+
+      let response;
+      
+      if (isSearchMode) {
+        // 搜索模式
+        const fields = 'p.name,b.name,p.product_code,p.specification,p.net_content';
+        response = await commonSearch('products', keyword, fields, false, commonParams);
+      } else {
+        // 分页模式
+        response = await request({
+          url: '/api/common/pagination/query',
+          method: 'GET',
+          params: {
+            page,
+            page_size: pageSize,
+            module: 'products',
+            with_brand: true,
+            ...commonParams
+          }
+        });
+      }
+
+      // 统一处理响应
+      if (response && response.code === 200 && response.data) {
+        let productList = [];
+        let total = 0;
+        let totalPages = 1;
+        
+        if (isSearchMode) {
+          // 处理搜索响应
+          productList = response.data.list || [];
+          total = productList.length;
+          
+          // 前端分页 - 计算当前页应该显示的数据
+          const startIndex = (page - 1) * pageSize;
+          const endIndex = Math.min(startIndex + pageSize, total);
+          productList = productList.slice(startIndex, endIndex);
+          totalPages = Math.ceil(total / pageSize);
+        } else {
+          // 处理分页响应
+          productList = response.data.items || [];
+          total = response.data.pagination?.total || 0;
+          totalPages = response.data.pagination?.total_pages || 1;
+        }
+        
+        try {
+          // 处理产品数据，并处理可能的失败情况
+          const enhancedProducts = await processProductData(productList);
+          
+          // 添加序号
+          const startIndex = (page - 1) * pageSize;
+          const productsWithIndex = enhancedProducts.map((item, index) => ({
+            ...item,
+            index: startIndex + index + 1
+          }));
+          
+          // 更新状态
+          setProducts(productsWithIndex);
+        } catch (processError) {
+          console.error('处理产品数据时出错:', processError);
+          
+          // 即使处理详情失败，仍然显示基本列表数据并添加序号
+          const startIndex = (page - 1) * pageSize;
+          const productsWithIndex = productList.map((item, index) => ({
+            ...item,
+            index: startIndex + index + 1,
+            // 确保基本字段存在
+            price_tiers: Array.isArray(item.price_tiers) ? item.price_tiers : [],
+            attachments: Array.isArray(item.attachments) ? item.attachments : []
+          }));
+          
+          setProducts(productsWithIndex);
+        }
+        
+        // 无论产品详情处理成功与否，都更新分页信息
+        setPagination({
+          current: page,
+          pageSize: pageSize,
+          total: total,
+          totalPages: totalPages
+        });
+      } else {
+        // 错误处理
+        setProducts([]);
+        setPagination(prev => ({
+          ...prev,
+          current: 1,
+          total: 0,
+          totalPages: 0
+        }));
+        
+        if (response?.message) {
+          message.error(response.message);
+        }
+      }
+    } catch (error) {
+      // 统一错误处理
+      console.error('获取产品列表失败:', error);
+      setProducts([]);
+      setPagination(prev => ({
+        ...prev,
+        current: 1,
+        total: 0,
+        totalPages: 0
+      }));
+      message.error('获取产品列表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+};
+
+const ProductManagement = () => {
+  const { user, isAuthenticated } = useSelector(state => state.auth);
+  const isAdmin = user?.is_admin;
+  const { message, modal } = App.useApp();
+  
+  // 添加搜索防抖定时器的引用
+  const searchTimerRef = useRef(null);
+  // 用于保存fetchProducts函数的引用
+  const fetchProductsRef = useRef(null);
+  
+  // 状态管理
+  const [products, setProducts] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false); // 是否处于搜索状态
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+    totalPages: 0
+  });
+  const [searchParams, setSearchParams] = useState({
+    keyword: '',
+    brand_id: null, // 添加品牌ID字段用于筛选
+    sort_field: 'updated_at',
+    sort_order: 'desc'
+  });
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const [isEdit, setIsEdit] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [currentDeleteId, setCurrentDeleteId] = useState(null);
+  
+  // 根据用户角色确定固定的所有者类型 - 管理员查看公司总货盘，普通用户查看个人货盘
+  const ownerType = isAdmin ? 'COMPANY' : 'SELLER';
+
+  // 优化processProductData函数，减少不必要的请求和数据处理
+  const processProductData = async (products) => {
+    if (!products || products.length === 0) return [];
+    
+    // 创建产品ID到产品的映射，以便后续更新
+    const productMap = {};
+    products.forEach(product => {
+      productMap[product.id] = { ...product };
+      
+      // 确保每个产品都有价格档位和附件数组
+      productMap[product.id].price_tiers = Array.isArray(product.price_tiers) ? product.price_tiers : [];
+      productMap[product.id].attachments = Array.isArray(product.attachments) ? product.attachments : [];
+    });
+    
+    // 仅处理缺少详情数据的产品
+    const productsNeedingDetails = products.filter(product => 
+      (!product.price_tiers || !Array.isArray(product.price_tiers) || product.price_tiers.length === 0) ||
+      (!product.attachments || !Array.isArray(product.attachments) || product.attachments.length === 0)
+    );
+    
+    // 如果所有产品都已有完整数据，直接返回
+    if (productsNeedingDetails.length === 0) {
+      return Object.values(productMap);
+    }
+    
+    // 获取需要补充详情的产品ID列表
+    const productIds = productsNeedingDetails.map(p => p.id);
+    
+    try {
+      // 并行请求所有产品详情
+      const queryPromises = productIds.map(productId => 
+        request({
+          url: `/api/pallet/products/${productId}`,
+          method: 'GET'
+        }).catch(err => {
+          console.warn(`获取产品详情失败 (ID: ${productId}):`, err);
+          // 返回一个标准化的错误响应对象，而不是抛出异常
+          return { 
+            code: err.response?.status || 500, 
+            data: null,
+            error: true
+          }; 
+        })
+      );
+      
+      // 等待所有请求完成
+      const responses = await Promise.all(queryPromises);
+      
+      // 更新产品数据
+      responses.forEach((response, index) => {
+        const productId = productIds[index];
+        if (response && response.code === 200 && response.data) {
+          const productData = response.data;
+          
+          // 从产品详情中获取价格档位和附件信息
+          if (productMap[productId]) {
+            productMap[productId].price_tiers = productData.price_tiers || [];
+            productMap[productId].attachments = productData.attachments || [];
+          }
+        }
+        // 即使获取详情失败，也保留产品的基本信息
+      });
+      
+      // 返回更新后的产品列表
+      return Object.values(productMap);
+    } catch (error) {
+      console.error('处理产品数据时出错:', error);
+      // 出错时返回原始产品列表
+      return products;
+    }
+  };
+
+  // 在useEffect中创建fetchProducts函数
+  useEffect(() => {
+    // 创建fetchProducts函数
+    fetchProductsRef.current = createProductFetcher(
+      setLoading, 
+      setIsSearching, 
+      setProducts, 
+      setPagination, 
+      message, 
+      ownerType, 
+      processProductData
+    );
+    
+    // 组件卸载时清理
+    return () => {
+      fetchProductsRef.current = null;
+    };
+  }, [ownerType, message]);
+
+  // 包装函数，确保在fetchProductsRef.current已赋值后调用
+  const fetchProducts = useCallback((page = pagination.current, pageSize = pagination.pageSize, keyword = searchParams.keyword, brandId = searchParams.brand_id) => {
+    if (fetchProductsRef.current) {
+      return fetchProductsRef.current(
+        page, 
+        pageSize, 
+        keyword, 
+        brandId, 
+        searchParams.sort_field, 
+        searchParams.sort_order
+      );
+    }
+    return Promise.resolve();
+  }, [pagination.current, pagination.pageSize, searchParams]);
+
+  // 处理图片预览
+  const handlePreviewImage = useCallback((imageUrl, title) => {
+    if (!imageUrl) return;
+    
+    // 设置加载状态
+    setPreviewLoading(true);
+    setPreviewImage(imageUrl);
+    setPreviewTitle(title || '产品图片');
+    setPreviewVisible(true);
+    
+    // 预加载图片
+    const img = new Image();
+    img.src = imageUrl;
+    img.onload = () => setPreviewLoading(false);
+    img.onerror = () => {
+      setPreviewLoading(false);
+      message.error('图片加载失败');
+    };
+  }, []);
+  
+  // 关闭图片预览
+  const handlePreviewCancel = useCallback(() => {
+    setPreviewVisible(false);
+  }, []);
+
+  // 获取产品列表
+  const getProducts = async () => {
+    // ... existing code ...
+  };
+
+  // 处理搜索
+  const handleSearch = () => {
+    // ... existing code ...
+  };
+
+  // 添加产品
+  const handleAddProduct = () => {
+    setIsFormVisible(true);
+    setIsEdit(false);
+    setCurrentProduct(null);
+  };
+
+  // 编辑产品
+  const handleEdit = async (record) => {
+    try {
+      setLoading(true);
+      // 获取产品详情，包括价格档位和附件信息
+      const response = await request({
+        url: `/api/pallet/products/${record.id}`,
+        method: 'GET'
+      });
+      
+      if (response && response.code === 200) {
+        setCurrentProduct(response.data);
+        setIsEdit(true);
+        setIsFormVisible(true);
+      }
+    } catch (error) {
+      console.error('获取产品详情失败:', error);
+      message.error('获取产品详情失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 处理产品表单完成
+  const handleFormFinish = (productId, savedProduct) => {
+    setIsFormVisible(false);
+    
+    // 立即刷新产品列表
+    if (fetchProductsRef.current) {
+      console.log('[表单完成] 刷新产品列表', { productId, savedProduct });
+      fetchProductsRef.current(
+        pagination.current, 
+        pagination.pageSize, 
+        searchParams.keyword, 
+        searchParams.brand_id,
+        searchParams.sort_field,
+        searchParams.sort_order
+      );
+    }
+  };
+
+  // 取消表单
+  const handleFormCancel = () => {
+    setIsFormVisible(false);
+  };
+
+  // 处理产品移动到回收站
+  const handleMoveToRecycleBin = useCallback((id) => {
+    // 显示确认提示对话框
+    modal.confirm({
+      title: '确定要将此产品放入回收站吗？',
+      content: '放入回收站后可以在回收站中恢复',
+      okText: '确定',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          setLoading(true);
+          
+          // 调用放入回收站API
+          const response = await request({
+            url: `/api/pallet/products/${id}/recycle`,
+            method: 'POST',
+            data: {
+              confirm: true
+            }
+          });
+          
+          if (response && response.code === 200) {
+            message.success('产品已放入回收站');
+            
+            // 刷新产品列表
+            if (fetchProductsRef.current) {
+              fetchProductsRef.current(
+                pagination.current, 
+                pagination.pageSize, 
+                searchParams.keyword, 
+                searchParams.brand_id,
+                searchParams.sort_field,
+                searchParams.sort_order
+              );
+            }
+          } else {
+            message.error(response?.message || '放入回收站失败');
+          }
+        } catch (error) {
+          console.error('放入回收站失败:', error);
+          message.error('放入回收站失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  }, [modal, message, pagination, searchParams, setLoading]);
+
+  // 处理产品删除
+  const handleDelete = useCallback((id) => {
+    setCurrentDeleteId(id);
+    setDeleteModalVisible(true);
+  }, []);
+
+  // 处理永久删除确认
+  const handleConfirmPermanentDelete = useCallback(async () => {
+    if (!currentDeleteId) return;
+    
+    try {
+      setLoading(true);
+      
+      // 调用永久删除API
+      const response = await request({
+        url: `/api/pallet/products/${currentDeleteId}/permanent`,
+        method: 'DELETE'
+      });
+      
+      if (response && response.code === 200) {
+        message.success('产品已永久删除');
+        setDeleteModalVisible(false);
+        
+        // 刷新产品列表
+        if (fetchProductsRef.current) {
+          fetchProductsRef.current(
+            pagination.current, 
+            pagination.pageSize, 
+            searchParams.keyword, 
+            searchParams.brand_id,
+            searchParams.sort_field,
+            searchParams.sort_order
+          );
+        }
+      } else {
+        message.error(response?.message || '删除产品失败');
+      }
+    } catch (error) {
+      console.error('删除产品失败:', error);
+      message.error('删除产品失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+    } finally {
+      setLoading(false);
+    }
+  }, [currentDeleteId, pagination, searchParams, message, setLoading]);
+
+  // 处理取消删除
+  const handleCancelDelete = useCallback(() => {
+    setDeleteModalVisible(false);
+    setCurrentDeleteId(null);
+  }, []);
+
+  // 处理放入回收站并关闭模态框
+  const handleMoveToRecycleBinFromModal = useCallback(async () => {
+    if (!currentDeleteId) return;
+    
+    try {
+      setLoading(true);
+      
+      // 调用放入回收站API
+      const response = await request({
+        url: `/api/pallet/products/${currentDeleteId}/recycle`,
+        method: 'POST',
+        data: {
+          confirm: true
+        }
+      });
+      
+      if (response && response.code === 200) {
+        message.success('产品已放入回收站');
+        setDeleteModalVisible(false);
+        setCurrentDeleteId(null);
+        
+        // 刷新产品列表
+        if (fetchProductsRef.current) {
+          fetchProductsRef.current(
+            pagination.current, 
+            pagination.pageSize, 
+            searchParams.keyword, 
+            searchParams.brand_id,
+            searchParams.sort_field,
+            searchParams.sort_order
+          );
+        }
+      } else {
+        message.error(response?.message || '放入回收站失败');
+      }
+    } catch (error) {
+      console.error('放入回收站失败:', error);
+      message.error('放入回收站失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+    } finally {
+      setLoading(false);
+    }
+  }, [currentDeleteId, message, pagination, searchParams, setLoading]);
+
+  // 处理下载素材包
+  const handleDownloadMaterial = useCallback((attachment) => {
+    if (!attachment || !attachment.id) {
+      message.error('素材包不存在');
+      return;
+    }
+    
+    try {
+      // 直接使用附件的文件路径
+      if (attachment.file_path) {
+        // 构建完整的文件URL
+        const fileUrl = getImageUrl(attachment.file_path);
+        
+        // 记录下载请求
+        console.log('下载素材包', {
+          attachmentId: attachment.id,
+          fileName: attachment.file_name,
+          fileUrl
+        });
+        
+        // 使用隐藏的a标签触发文件下载
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        
+        // 设置下载文件名
+        const fileName = attachment.file_name || `素材包_${attachment.id}`;
+        link.setAttribute('download', fileName);
+        
+        // 触发下载
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        message.success('素材包下载已开始');
+      } else {
+        message.error('素材包文件路径不存在');
+      }
+    } catch (error) {
+      console.error('下载素材包失败', error);
+      message.error('下载素材包失败：' + (error.message || '未知错误'));
+    }
+  }, []);
+
+  // 处理分享货盘
+  const handleSharePallet = useCallback(() => {
+    message.info('分享货盘功能待实现');
+  }, []);
+
+  // 优化columns定义，将长函数提取出来，提高可读性
+  const renderProductImage = useCallback((_, record) => {
+    // 查找该产品的图片附件(类型为IMAGE)
+    const imageAttachment = record.attachments?.find(
+      attachment => attachment.file_type === 'IMAGE'
+    );
+    
+    if (imageAttachment && imageAttachment.file_path) {
+      // 使用getImageUrl函数获取完整的图片URL
+      const imageUrl = getImageUrl(imageAttachment.file_path);
+      return (
+        <div className={styles.productImage} onClick={() => handlePreviewImage(imageUrl, record.name)}>
+          <img 
+            src={imageUrl} 
+            alt={record.name || '产品图片'} 
+            loading="lazy" // 添加懒加载
+          />
+        </div>
+      );
+    }
+    
+    // 没有图片时显示占位符
+    return <div className={styles.imgPlaceholder}></div>;
+  }, [handlePreviewImage]);
+
+  const renderBrandName = useCallback((brandName, record) => {
+    if (brandName) return brandName;
+    
+    if (record.brand_id && brands.length > 0) {
+      const brand = brands.find(b => b.id === record.brand_id);
+      return brand ? brand.name : '-';
+    }
+    
+    return '-';
+  }, [brands]);
+
+  const renderPriceTiers = useCallback((priceTiers) => {
+    // 处理价格档位
+    let tiers = priceTiers;
+    
+    // 检查价格档位是否为字符串（可能是JSON字符串）
+    if (typeof priceTiers === 'string') {
+      try {
+        tiers = JSON.parse(priceTiers);
+      } catch (e) {
+        return <div className={styles.priceTiersCell}>
+          <div className={styles.priceTierRow}>
+            <span className={styles.tierQty}>-</span>
+            <span className={styles.tierPrice}>-</span>
+          </div>
+        </div>;
+      }
+    }
+    
+    // 检查价格档位是否存在且为数组
+    if (!tiers || !Array.isArray(tiers) || tiers.length === 0) {
+      return <div className={styles.priceTiersCell}>
+        <div className={styles.priceTierRow}>
+          <span className={styles.tierQty}>-</span>
+          <span className={styles.tierPrice}>-</span>
+        </div>
+      </div>;
+    }
+    
+    // 直接使用原始顺序，不进行排序
+    return (
+      <div className={styles.priceTiersCell}>
+        {tiers.map((tier, index) => (
+          <div key={index} className={styles.priceTierRow}>
+            <span className={styles.tierQty}>≤{tier.quantity}</span>
+            <span className={styles.tierPrice}>{tier.price}元/件</span>
+          </div>
+        ))}
+      </div>
+    );
+  }, []);
+
+  // 处理表格分页、排序和筛选变化 - 放在fetchProducts定义之后，避免循环引用
+  const handleTableChange = useCallback((pagination, filters, sorter) => {
+    // 处理分页变化
+    if (pagination && (pagination.current !== undefined || pagination.pageSize !== undefined)) {
+      const current = pagination.current || 1;
+      const pageSize = pagination.pageSize || 10;
+      
+      // 更新本地分页状态
+      setPagination(prev => ({
+        ...prev,
+        current,
+        pageSize
+      }));
+      
+      // 重新获取数据
+      fetchProducts(current, pageSize, searchParams.keyword, searchParams.brand_id);
+    }
+    
+    // 处理排序变化
+    if (sorter && sorter.field && sorter.order) {
+      // 映射antd的排序方式到后端API的排序方式
+      const sortOrder = sorter.order === 'ascend' ? 'asc' : 'desc';
+      
+      // 更新搜索参数中的排序字段和排序方式
+      setSearchParams(prev => ({
+        ...prev,
+        sort_field: sorter.field,
+        sort_order: sortOrder
+      }));
+      
+      // 重新获取数据
+      fetchProducts(
+        pagination.current,
+        pagination.pageSize,
+        searchParams.keyword,
+        searchParams.brand_id
+      );
+    }
+  }, [fetchProducts, searchParams.keyword, searchParams.brand_id]);
+
+  // 使用useMemo优化columns定义，避免不必要的重新渲染
+  const columns = useMemo(() => [
+    { 
+      title: <div className={styles.center}>序号</div>, 
+      dataIndex: 'index', 
+      key: 'index', 
+      align: 'center',
+      width: 60 
+    },
+    { 
+      title: <div className={styles.center}>图片</div>, 
+      dataIndex: 'image', 
+      key: 'image', 
+      align: 'center',
+      width: 100,
+      render: renderProductImage
+    },
+    { 
+      title: <div className={styles.center}>名称</div>, 
+      dataIndex: 'name', 
+      key: 'name', 
+      align: 'center',
+      width: 150
+    },
+    { 
+      title: <div className={styles.center}>品牌</div>, 
+      dataIndex: 'brand_name', 
+      key: 'brand_name', 
+      align: 'center',
+      width: 120,
+      render: renderBrandName
+    },
+    { 
+      title: <div className={styles.center}>货号</div>, 
+      dataIndex: 'product_code', 
+      key: 'product_code', 
+      align: 'center',
+      width: 120
+    },
+    { 
+      title: <div className={styles.center}>规格</div>, 
+      dataIndex: 'specification', 
+      key: 'specification', 
+      align: 'center',
+      width: 120
+    },
+    { 
+      title: <div className={styles.center}>净含量</div>, 
+      dataIndex: 'net_content', 
+      key: 'net_content', 
+      align: 'center',
+      width: 100
+    },
+    { 
+      title: <div className={styles.center}>产品尺寸</div>, 
+      dataIndex: 'product_size', 
+      key: 'product_size', 
+      align: 'center',
+      width: 120
+    },
+    { 
+      title: <div className={styles.center}>装箱方式</div>, 
+      dataIndex: 'shipping_method', 
+      key: 'shipping_method', 
+      align: 'center',
+      width: 120
+    },
+    { 
+      title: <div className={styles.center}>装箱规格</div>, 
+      dataIndex: 'shipping_spec', 
+      key: 'shipping_spec', 
+      align: 'center',
+      width: 120
+    },
+    { 
+      title: <div className={styles.center}>装箱尺寸</div>, 
+      dataIndex: 'shipping_size', 
+      key: 'shipping_size', 
+      align: 'center',
+      width: 120
+    },
+    { 
+      title: (
+        <div className={styles.center} style={{ overflow: 'hidden' }}>
+          <div style={{ 
+            width: '100%', 
+            height: '28px', 
+            padding: '0 2px', 
+            boxSizing: 'border-box', 
+            borderBottom: '1px solid #e8e8e8', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            backgroundColor: '#e6f7ff',
+            color: 'rgba(0, 0, 0, 0.85)',
+            fontWeight: 'normal'
+          }}>
+            档位价格
+          </div>
+          <div className={styles.priceTiersHeader}>
+            <span className={styles.tierQtyHeader}>订购数量</span>
+            <span className={styles.tierPriceHeader}>价格</span>
+          </div>
+        </div>
+      ),
+      dataIndex: 'price_tiers', 
+      key: 'price_tiers', 
+      align: 'center',
+      width: 160,
+      className: styles.priceTiersColumn,
+      render: renderPriceTiers
+    },
+    { 
+      title: <div className={styles.center}>素材包</div>, 
+      dataIndex: 'material', 
+      key: 'material', 
+      align: 'center',
+      width: 80,
+      render: (_, record) => {
+        const materialAttachment = record.attachments?.find(attachment => attachment.file_type === 'MATERIAL');
+        return materialAttachment ? 
+          <Button type="link" icon={<DownloadOutlined />} onClick={() => handleDownloadMaterial(materialAttachment)} /> : 
+          '-';
+      }
+    },
+    { 
+      title: <div className={styles.center}>产品链接</div>, 
+      dataIndex: 'product_url', 
+      key: 'product_url', 
+      align: 'center',
+      width: 80,
+      render: (url) => url ? 
+        <Button type="link" icon={<EyeOutlined />} onClick={() => window.open(url, '_blank')} /> : 
+        '-'
+    },
+    { 
+      title: <div className={styles.center}>编辑</div>, 
+      dataIndex: 'edit', 
+      key: 'edit', 
+      align: 'center',
+      width: 80,
+      render: (_, record) => <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+    },
+    { 
+      title: <div className={styles.center}>放入回收站</div>, 
+      dataIndex: 'recycle', 
+      key: 'recycle', 
+      align: 'center',
+      width: 120,
+      render: (_, record) => <Button type="link" onClick={() => handleMoveToRecycleBin(record.id)}>放入回收站</Button>
+    },
+    { 
+      title: <div className={styles.center}>删除</div>, 
+      dataIndex: 'delete', 
+      key: 'delete', 
+      align: 'center',
+      width: 80,
+      render: (_, record) => <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+    },
+  ], [renderProductImage, renderBrandName, renderPriceTiers, handleDownloadMaterial, handleEdit, handleDelete, handleMoveToRecycleBin]);
+
+  // 引用保存组件样式重置id
+  const styleResetRef = useRef(null);
+
+  // 初始化加载数据 - 确保先加载品牌再加载产品
+  useEffect(() => {
+    // 数据加载函数
+    const loadData = async () => {
+      try {
+        // 先获取品牌列表
+        await fetchBrands();
+        
+        // 然后获取产品列表
+        await fetchProducts();
+      } catch (error) {
+        message.error('数据加载失败，请刷新页面重试');
+      }
+    };
+    
+    loadData();
+    
+    // 添加表格样式
+    const styleId = 'product-management-styles';
+    if (!document.getElementById(styleId)) {
+      const styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      styleElement.innerHTML = `
+        .${styles.container} .ant-table {
+          border-collapse: separate !important;
+          border-spacing: 0 !important;
+        }
+        
+        .${styles.container} .ant-table-cell {
+          padding: 0 !important;
+        }
+        
+        .${styles.container} .ant-table-thead > tr > th,
+        .${styles.container} .ant-table-tbody > tr > td {
+          padding: 0 !important;
+          border-top: none !important;
+          border-left: none !important;
+          border-right: 1px solid #e8e8e8 !important;
+          border-bottom: 1px solid #e8e8e8 !important;
+        }
+        
+        .${styles.container} .ant-table-thead > tr > th:first-child,
+        .${styles.container} .ant-table-tbody > tr > td:first-child {
+          border-left: 1px solid #e8e8e8 !important;
+        }
+        
+        .${styles.container} .ant-table-thead > tr > th {
+          background-color: #e6f7ff !important;
+          border-color: #e8e8e8 !important;
+        }
+        
+        .${styles.container} .ant-table-tbody > tr:hover > td {
+          background-color: #f0f7ff !important;
+        }
+        
+        /* 确保表头内容区域完全贴合单元格边缘 */
+        .${styles.container} .ant-table-thead > tr > th .${styles.center} {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+        }
+        
+        /* 确保全部表头都有统一的背景色 */
+        .${styles.container} .ant-table-thead > tr > th .${styles.center} > div {
+          background-color: #e6f7ff !important;
+        }
+        
+        /* 确保价格档位单元格的样式 */
+        .${styles.container} .${styles.priceTiersCell} {
+          border: none !important;
+        }
+        
+        /* 确保中线贯穿 */
+        .${styles.container} .${styles.tierQty} {
+          border-right: 1px solid #e8e8e8 !important;
+        }
+        
+        /* 确保价格档位单元格的分隔线与表格边框相连 */
+        .${styles.container} .ant-table-row td:not(:first-child) {
+          border-left: none !important; 
+        }
+        
+        /* 移除价格档位行的背景色，防止hover效果影响 */
+        .${styles.container} .ant-table-tbody > tr:hover .${styles.priceTierRow} {
+          background-color: transparent !important;
+        }
+        
+        /* 修复订购数量和价格之间的分隔线 */
+        .${styles.container} .${styles.tierQty} {
+          position: relative;
+        }
+        
+        .${styles.container} .${styles.tierQty}:after {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          right: 0;
+          width: 1px;
+          background-color: #e8e8e8;
+          height: 100%;
+        }
+      `;
+      
+      document.head.appendChild(styleElement);
+      styleResetRef.current = styleId;
+    }
+    
+    // 组件卸载时清理
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+      
+      if (styleResetRef.current) {
+        const styleElement = document.getElementById(styleResetRef.current);
+        if (styleElement) {
+          document.head.removeChild(styleElement);
+        }
+      }
+    };
+  }, [fetchProducts]);
+
+  // 获取品牌列表 - 仅用于显示，不再用于筛选
+  const fetchBrands = async () => {
+    try {
+      const response = await request({
+        url: '/api/pallet/brands',
+        method: 'GET',
+        params: {
+          status: 'ACTIVE'
+        }
+      });
+      
+      console.log('品牌列表API响应:', response);
+      
+      if (response && response.data && response.data.list && Array.isArray(response.data.list)) {
+        console.log('成功获取品牌列表, 数量:', response.data.list.length);
+        setBrands(response.data.list);
+        return response.data.list; // 返回品牌数据，方便后续使用
+      } else {
+        console.error('获取品牌列表格式错误或为空');
+        message.error('获取品牌列表失败');
+        return [];
+      }
+    } catch (error) {
+      console.error('获取品牌列表失败:', error);
+      message.error('获取品牌列表失败');
+      return [];
+    }
+  };
+
+  // 优化原生select元素的样式，提升用户体验
+  const selectStyle = {
+    width: '100%', 
+    height: '32px',
+    padding: '4px 11px',
+    borderRadius: '6px',
+    border: '1px solid #d9d9d9',
+    fontSize: '14px',
+    boxSizing: 'border-box',
+    outline: 'none',
+    backgroundColor: '#fff',
+    color: 'rgba(0, 0, 0, 0.85)',
+    cursor: 'pointer',
+    appearance: 'auto',  // 确保下拉箭头在各浏览器中显示
+    transition: 'all 0.3s'
+  };
+
+  // 简化handleSearchInputChange函数，保留核心功能
+  const handleSearchInputChange = useCallback((e) => {
+    const value = e.target.value;
+    
+    // 清除之前的定时器
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+    
+    // 更新搜索关键词状态
+    setSearchParams(prev => ({
+      ...prev,
+      keyword: value
+    }));
+    
+    // 空输入时立即执行查询，否则添加防抖
+    if (!value || value.trim() === '') {
+      fetchProducts(1, pagination.pageSize, '', searchParams.brand_id);
+    } else {
+      searchTimerRef.current = setTimeout(() => {
+        fetchProducts(1, pagination.pageSize, value, searchParams.brand_id);
+      }, 300);
+    }
+  }, [fetchProducts, pagination.pageSize, searchParams.brand_id]);
+
+  // 处理品牌筛选变化
+  const handleBrandChange = useCallback((event) => {
+    // 使用event.target.value获取选中值
+    const selectedValue = event.target.value;
+    
+    // 设置brand_id，如果是'all'则为null，否则转为数字
+    let brandId = null;
+    if (selectedValue !== 'all') {
+      brandId = parseInt(selectedValue, 10);
+    }
+    
+    // 更新搜索参数
+    setSearchParams(prev => ({
+      ...prev,
+      brand_id: brandId
+    }));
+    
+    // 获取筛选后的数据
+    fetchProducts(1, pagination.pageSize, searchParams.keyword, brandId);
+  }, [brands, fetchProducts, pagination.pageSize, searchParams.keyword]);
+
+  // 强制刷新产品列表，使用useCallback优化
+  const handleRefreshList = useCallback(() => {
+    // 重置搜索参数为初始值
+    setSearchParams({
+      keyword: '',
+      brand_id: null,
+      sort_field: 'updated_at',
+      sort_order: 'desc'
+    });
+    
+    // 重置分页设置
+    setPagination({
+      current: 1,
+      pageSize: 10,
+      total: 0,
+      totalPages: 0
+    });
+    
+    // 重置搜索状态
+    setIsSearching(false);
+    
+    // 重新获取数据
+    const refreshData = async () => {
+      await fetchBrands();
+      await fetchProducts(1, 10, '', null);
+    };
+    
+    refreshData();
+    
+    message.success('页面已刷新');
+  }, [fetchProducts]);
+
+  // 如果未认证，返回null（让路由系统处理重定向）
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.pageHeader}>
+        <Title level={3}>{isAdmin ? '公司总货盘管理' : '我的货盘管理'}</Title>
+        
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarLeft}>
+            <Input
+              placeholder="搜索产品名称、品牌、货号、规格、净含量" 
+              style={{ 
+                width: 400,
+                marginRight: 16,
+                borderRadius: '20px'
+              }}
+              value={searchParams.keyword}
+              onChange={handleSearchInputChange}
+              allowClear
+              prefix={<SearchOutlined style={{ color: '#999' }} />}
+            />
+            
+            <div style={{ display: 'inline-block', width: 200, marginRight: 8 }}>
+              <select 
+                style={selectStyle}
+                value={searchParams.brand_id === null ? 'all' : String(searchParams.brand_id)}
+                onChange={handleBrandChange}
+              >
+                <option value="all">全部品牌</option>
+                {brands.map(brand => (
+                  <option key={brand.id} value={String(brand.id)}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={handleRefreshList}
+              style={{ marginRight: 16 }}
+            >
+              刷新
+            </Button>
+          </div>
+          <div className={styles.toolbarRight}>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              style={{ marginRight: 16 }}
+              onClick={handleAddProduct}
+              className={styles.addProductBtn}
+            >
+              添加产品
+            </Button>
+            <Button 
+              icon={<ShareAltOutlined />} 
+              className={styles.shareBtn}
+              onClick={handleSharePallet}
+            >
+              分享货盘
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      <DataTable
+        className={`${styles.table} ${styles.productTable}`}
+        columns={columns}
+        dataSource={products}
+        rowKey="id"
+        loading={loading}
+        pagination={{
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showQuickJumper: true,
+          showTotal: (total) => `共 ${total} 条记录`
+        }}
+        onChange={handleTableChange}
+        showPagination={true}
+        tableProps={{
+          bordered: true,
+          scroll: { x: 'max-content' }
+        }}
+      />
+      
+      <Modal
+        title={previewTitle}
+        footer={null}
+        open={previewVisible}
+        onCancel={handlePreviewCancel}
+        centered
+        width="auto"
+        styles={{
+          body: { padding: 0 }
+        }}
+        style={{ maxWidth: '90vw' }}
+        wrapClassName="product-image-preview-modal"
+      >
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          minHeight: '200px',
+          minWidth: '300px',
+          maxHeight: '80vh',
+          overflow: 'auto'
+        }}>
+          {previewLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <Spin size="large" tip="图片加载中..." />
+            </div>
+          ) : (
+            <img 
+              alt={previewTitle} 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '80vh', 
+                objectFit: 'contain' 
+              }} 
+              src={previewImage} 
+            />
+          )}
+        </div>
+      </Modal>
+      
+      {/* 添加编辑产品表单弹窗 */}
+      <Modal
+        open={isFormVisible}
+        onCancel={handleFormCancel}
+        footer={null}
+        width={960}
+        style={{ top: 20 }}
+        destroyOnClose
+        closeIcon={<div className={styles.closeModalIcon}>×</div>}
+        styles={{
+          body: { padding: 0 }
+        }}
+        maskClosable={false}
+        className={styles.productFormModal}
+      >
+        <ProductForm
+          isEdit={isEdit}
+          initialValues={currentProduct}
+          onFinish={handleFormFinish}
+          onCancel={handleFormCancel}
+        />
+      </Modal>
+      
+      {/* 产品删除确认模态框 */}
+      <Modal
+        title="确定要删除本产品吗？"
+        open={deleteModalVisible}
+        onCancel={handleCancelDelete}
+        footer={null}
+        centered
+        width={400}
+        closable={true}
+        closeIcon={<div style={{ fontSize: '24px' }}>×</div>}
+      >
+        <p>放入回收站可恢复，永久删除不可恢复！</p>
+        <div style={{ marginTop: 24, textAlign: 'right' }}>
+          <Button onClick={handleCancelDelete}>
+            取消
+          </Button>
+          <Button onClick={handleMoveToRecycleBinFromModal} style={{ margin: '0 8px' }}>
+            放入回收站
+          </Button>
+          <Button danger onClick={handleConfirmPermanentDelete}>
+            永久删除
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+// 使用App组件包裹ProductManagement，提供全局消息和模态框上下文
+const ProductManagementWithApp = () => (
+  <App>
+    <ProductManagement />
+  </App>
+);
+
+export default ProductManagementWithApp; 

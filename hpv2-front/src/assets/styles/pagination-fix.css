@@ -1,0 +1,36 @@
+/* 分页下拉菜单修复样式 */
+
+/* 确保下拉菜单有正确的层级和位置 */
+.ant-select-dropdown {
+  position: fixed !important;
+  z-index: 1500 !important;
+}
+
+/* 确保分页选项容器可见 */
+.ant-pagination-options {
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* 增加分页选择器宽度 */
+.ant-pagination-options-size-changer {
+  min-width: 110px !important;
+}
+
+/* 确保下拉菜单不受父容器影响 */
+.ant-select-dropdown-placement-bottomLeft,
+.ant-select-dropdown-placement-bottomRight {
+  left: auto !important;
+  top: auto !important;
+}
+
+/* 修复跳转输入框宽度 */
+.ant-pagination-options-quick-jumper input {
+  width: 50px !important;
+  margin: 0 8px !important;
+}
+
+/* 修复页码选择器的弹出位置 */
+.ant-select-dropdown {
+  transform-origin: center bottom !important;
+} 

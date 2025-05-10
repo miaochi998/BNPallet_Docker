@@ -1,0 +1,157 @@
+.loginContainer {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f0f2f5;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 左侧品牌展示区 */
+.loginBanner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #3949ab;
+  color: white;
+  padding: 40px;
+  text-align: center;
+  position: relative;
+}
+
+.brandLogo {
+  margin-bottom: 30px;
+}
+
+.brandLogo img {
+  height: 60px;
+  width: auto;
+}
+
+.systemTitle {
+  text-align: center;
+}
+
+.systemTitle h1 {
+  font-size: 28px;
+  margin-bottom: 16px;
+  color: white;
+  font-weight: 500;
+}
+
+.systemTitle p {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+/* 右侧登录表单区 */
+.loginPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.loginHeader {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.loginHeader h2 {
+  font-size: 24px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.loginForm {
+  width: 100%;
+}
+
+.iconPrefix {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.loginButton {
+  height: 40px;
+  font-size: 16px;
+}
+
+.errorMessage {
+  margin-top: 16px;
+  padding: 8px 12px;
+  color: #f5222d;
+  background-color: rgba(245, 34, 45, 0.1);
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* 背景装饰 */
+.backgroundDecoration1 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 0;
+}
+
+.backgroundDecoration2 {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 0;
+}
+
+/* 响应式样式 */
+@media (max-width: 992px) {
+  .loginBanner {
+    flex: 0 0 40%;
+    padding: 20px;
+  }
+  
+  .loginPanel {
+    flex: 0 0 60%;
+  }
+}
+
+@media (max-width: 768px) {
+  .loginContainer {
+    flex-direction: column;
+  }
+  
+  .loginBanner {
+    flex: 0 0 30%;
+    padding: 20px;
+  }
+  
+  .loginPanel {
+    flex: 1;
+    max-width: 100%;
+    padding: 20px;
+  }
+  
+  .systemTitle h1 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .loginBanner {
+    display: none;
+  }
+  
+  .loginPanel {
+    padding: 20px;
+  }
+} 
