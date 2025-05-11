@@ -1,0 +1,33 @@
+# Docker部署相关忽略规则
+
+# 环境变量文件
+.env
+.env.*
+!.env.example
+
+# 日志和临时文件
+logs/
+*.log
+temp/
+
+# 上传目录
+uploads/
+
+# 依赖目录
+node_modules/
+
+# 构建输出
+dist/
+
+# OS生成的文件
+.DS_Store
+Thumbs.db
+
+# 编辑器目录和文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 部署目录（可选，如果需要忽略用户指定的部署目录）
+# /bnpallet/ 
