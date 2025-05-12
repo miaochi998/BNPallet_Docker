@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 
 # 版本信息
 VERSION="1.0.0"
-REPO_URL="https://raw.githubusercontent.com/miaochi998/BNPallet_Docker/main"
+REPO_URL="https://raw.githubusercontent.com/miaochi998/BNPallet_Docker/master"
 
 # 默认配置
 DEFAULT_DB_NAME="bnpallet"
