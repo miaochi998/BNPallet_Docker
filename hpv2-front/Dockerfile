@@ -3,6 +3,9 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# 安装构建依赖
+RUN apk add --no-cache python3 make g++ gcc
+
 # 复制并安装依赖
 COPY package*.json ./
 RUN npm ci

@@ -6,7 +6,7 @@ services:
     image: postgres:16-alpine
     container_name: bnpallet-postgres
     restart: always
-    pull_policy: if-not-present
+    pull_policy: if_not_present
     environment:
       # 数据库配置 - 可通过.env文件自定义
       POSTGRES_USER: ${DB_USER:-bnpallet}
@@ -42,7 +42,7 @@ services:
     image: ${DOCKER_HUB_USERNAME:-miaochi}/bnpallet-backend:${TAG:-latest}
     container_name: bnpallet-backend
     restart: always
-    pull_policy: if-not-present
+    pull_policy: if_not_present
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,7 +90,7 @@ services:
     image: ${DOCKER_HUB_USERNAME:-miaochi}/bnpallet-frontend:${TAG:-latest}
     container_name: bnpallet-frontend
     restart: always
-    pull_policy: if-not-present
+    pull_policy: if_not_present
     depends_on:
       # 确保后端服务已成功启动并可用
       backend:

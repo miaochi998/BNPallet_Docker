@@ -8,6 +8,9 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=6016
 
+# 安装构建依赖
+RUN apk add --no-cache python3 make g++ gcc
+
 # 复制package.json和package-lock.json文件
 COPY package*.json ./
 
