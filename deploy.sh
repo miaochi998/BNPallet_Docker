@@ -78,6 +78,12 @@ show_completion() {
     echo -e "• 查看状态: ${CYAN}cd ${INSTALL_DIR} && docker-compose ps${NC}"
     echo -e ""
     
+    echo -e "${WHITE}生成的管理脚本:${NC}"
+    echo -e "• 监控脚本: ${CYAN}${INSTALL_DIR}/monitor.sh${NC} - 用于监控和管理容器"
+    echo -e "• 离线安装: ${CYAN}${INSTALL_DIR}/offline-install.sh${NC} - 用于镜像的保存和加载"
+    echo -e "• 使用方法: ${CYAN}cd ${INSTALL_DIR} && ./monitor.sh help${NC} 查看监控命令"
+    echo -e ""
+    
     # 生成配置记录文件
     gen_config_record
     
@@ -148,6 +154,15 @@ Docker Hub账号: ${DOCKER_HUB_USERNAME}
 • 查看状态: cd ${INSTALL_DIR} && docker-compose ps
 • 备份数据库: cd ${INSTALL_DIR} && docker-compose exec postgres pg_dump -U ${DB_USER} ${DB_NAME} > backup.sql
 • 监控容器: cd ${INSTALL_DIR} && docker stats
+
+------------------------------------------
+生成的管理脚本:
+------------------------------------------
+1. 监控脚本: ${INSTALL_DIR}/monitor.sh
+   使用方法: cd ${INSTALL_DIR} && ./monitor.sh help
+
+2. 离线安装脚本: ${INSTALL_DIR}/offline-install.sh
+   使用方法: cd ${INSTALL_DIR} && ./offline-install.sh help
 
 ------------------------------------------
 备注:
@@ -746,6 +761,17 @@ create_monitoring_script() {
     # 监控脚本路径
     MONITOR_SCRIPT="${INSTALL_DIR}/monitor.sh"
     
+    # 检查目录是否存在并可写
+    if [ ! -d "$INSTALL_DIR" ]; then
+        echo -e "${RED}错误: 目录 $INSTALL_DIR 不存在${NC}"
+        mkdir -p "$INSTALL_DIR" || { echo -e "${RED}无法创建目录 $INSTALL_DIR${NC}"; return 1; }
+    fi
+    
+    if [ ! -w "$INSTALL_DIR" ]; then
+        echo -e "${RED}错误: 目录 $INSTALL_DIR 不可写${NC}"
+        return 1
+    fi
+    
     # 创建监控脚本
     cat > $MONITOR_SCRIPT << 'EOF'
 #!/bin/bash
@@ -898,11 +924,22 @@ main() {
 main "$@"
 EOF
     
-    # 设置可执行权限
-    chmod +x $MONITOR_SCRIPT
+    # 检查脚本是否成功创建
+    if [ ! -f "$MONITOR_SCRIPT" ]; then
+        echo -e "${RED}错误: 无法创建监控脚本 ${MONITOR_SCRIPT}${NC}"
+        return 1
+    fi
     
-    echo -e "${GREEN}监控脚本已创建: ${MONITOR_SCRIPT} ✓${NC}"
-    echo -e "使用方法: ${CYAN}${MONITOR_SCRIPT} help${NC} 查看可用命令"
+    # 设置可执行权限
+    chmod +x $MONITOR_SCRIPT || { echo -e "${RED}无法设置脚本执行权限${NC}"; return 1; }
+    
+    # 确认监控脚本已成功创建
+    if [ -x "$MONITOR_SCRIPT" ]; then
+        echo -e "${GREEN}监控脚本已创建: ${MONITOR_SCRIPT} ✓${NC}"
+        echo -e "使用方法: ${CYAN}${MONITOR_SCRIPT} help${NC} 查看可用命令"
+    else
+        echo -e "${RED}警告: 监控脚本创建成功，但可能没有正确设置执行权限${NC}"
+    fi
 }
 
 # 创建本地镜像缓存脚本
@@ -911,6 +948,17 @@ create_offline_install_script() {
     
     # 离线安装脚本路径
     OFFLINE_SCRIPT="${INSTALL_DIR}/offline-install.sh"
+    
+    # 检查目录是否存在并可写
+    if [ ! -d "$INSTALL_DIR" ]; then
+        echo -e "${RED}错误: 目录 $INSTALL_DIR 不存在${NC}"
+        mkdir -p "$INSTALL_DIR" || { echo -e "${RED}无法创建目录 $INSTALL_DIR${NC}"; return 1; }
+    fi
+    
+    if [ ! -w "$INSTALL_DIR" ]; then
+        echo -e "${RED}错误: 目录 $INSTALL_DIR 不可写${NC}"
+        return 1
+    fi
     
     # 创建离线安装脚本
     cat > $OFFLINE_SCRIPT << 'EOF'
@@ -1048,11 +1096,22 @@ main() {
 main "$@"
 EOF
     
-    # 设置可执行权限
-    chmod +x $OFFLINE_SCRIPT
+    # 检查脚本是否成功创建
+    if [ ! -f "$OFFLINE_SCRIPT" ]; then
+        echo -e "${RED}错误: 无法创建离线安装脚本 ${OFFLINE_SCRIPT}${NC}"
+        return 1
+    fi
     
-    echo -e "${GREEN}本地镜像缓存脚本已创建: ${OFFLINE_SCRIPT} ✓${NC}"
-    echo -e "使用方法: ${CYAN}${OFFLINE_SCRIPT} help${NC} 查看可用命令"
+    # 设置可执行权限
+    chmod +x $OFFLINE_SCRIPT || { echo -e "${RED}无法设置脚本执行权限${NC}"; return 1; }
+    
+    # 确认离线安装脚本已成功创建
+    if [ -x "$OFFLINE_SCRIPT" ]; then
+        echo -e "${GREEN}本地镜像缓存脚本已创建: ${OFFLINE_SCRIPT} ✓${NC}"
+        echo -e "使用方法: ${CYAN}${OFFLINE_SCRIPT} help${NC} 查看可用命令"
+    else
+        echo -e "${RED}警告: 离线安装脚本创建成功，但可能没有正确设置执行权限${NC}"
+    fi
 }
 
 # 主函数
