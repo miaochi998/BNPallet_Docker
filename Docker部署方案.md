@@ -25,7 +25,7 @@
 
 用户在拥有Docker环境的情况下，只需执行一行命令即可部署整个系统：
 ```bash
-curl -fsSL https://raw.githubusercontent.com/miaochi998/BNPallet_Docker/main/deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/miaochi998/BNPallet_Docker/master/deploy.sh | bash
 ```
 
 ### 2.3 系统需求
@@ -124,9 +124,9 @@ curl -fsSL https://raw.githubusercontent.com/miaochi998/BNPallet_Docker/main/dep
 
 #### 阶段五：发布与文档 [待完成]
 
-1. **构建并推送镜像** [待完成]
-   - 构建前端和后端镜像
-   - 推送到Docker Hub
+1. **构建并推送镜像** [已完成]
+   - 构建前端和后端镜像[已完成]
+   - 推送到Docker Hub[已完成]
 
 2. **完善README.md** [待完成]
    - 简明的部署说明

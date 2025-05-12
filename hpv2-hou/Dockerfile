@@ -9,7 +9,7 @@ ENV NODE_ENV=production \
     PORT=6016
 
 # 安装构建依赖
-RUN apk add --no-cache python3 make g++ gcc
+RUN apk add --no-cache python3 make g++ gcc curl
 
 # 复制package.json和package-lock.json文件
 COPY package*.json ./
@@ -29,7 +29,7 @@ EXPOSE ${PORT}
 
 # 健康检查（检查API是否响应）
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:${PORT}/health || exit 1
+    CMD wget --quiet --tries=1 --spider http://127.0.0.1:${PORT}/health || exit 1
 
 # 启动应用
 CMD ["node", "src/app.js"] 
