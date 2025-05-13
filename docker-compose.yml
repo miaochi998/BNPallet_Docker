@@ -68,6 +68,9 @@ services:
       
       # CORS配置
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:6017,http://127.0.0.1:6017}
+      
+      # 首次运行配置
+      - FIRST_RUN_MODE=${FIRST_RUN_MODE:-false}
     volumes:
       # 持久化上传文件和日志
       - backend_uploads:/app/uploads
