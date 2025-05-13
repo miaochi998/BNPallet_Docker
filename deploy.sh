@@ -1214,7 +1214,7 @@ main() {
         ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD
         
         # 修改setup-db.sql，去掉初始管理员账户创建
-        sed -i '/-- 初始管理员账户/,/ON CONFLICT/d' "${INSTALL_DIR}/setup-db.sql"
+        sed -i '/-- 初始管理员账户/,/ON CONFLICT (username) DO NOTHING;/d' "${INSTALL_DIR}/setup-db.sql"
     else
         # 生成管理员密码哈希
         echo -e "${YELLOW}生成管理员账户...${NC}"
