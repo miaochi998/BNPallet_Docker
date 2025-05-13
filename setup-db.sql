@@ -520,5 +520,5 @@ CREATE VIEW public.v_seller_recycle_bin AS
 -- 初始管理员账户 (密码: 123456)
 --
 INSERT INTO public.users (username, password, name, status, is_admin, company) 
-VALUES ('admin', '$2b$10$oeFSfeVH9UYl1sOQBF5XSef9nQCf/B41kKO3LYh8xFSPegBfm2Ja.', '系统管理员', 'ACTIVE', true, '帮你品牌')
+VALUES ('admin', '$2b$10$Gt37KQPSujSUc7ntnclmeeS2NGjw4SB4Crt.5qDaIW.uga6Do05r6', '系统管理员', 'ACTIVE', true, '帮你品牌')
 ON CONFLICT (username) DO NOTHING; 

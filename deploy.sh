@@ -33,9 +33,9 @@ DEFAULT_ADMIN_PASSWORD="123456"
 DEFAULT_FIRST_RUN_MODE="false"  # 是否启用首次运行向导
 
 # 管理员账户配置
-ADMIN_USERNAME=""
-ADMIN_PASSWORD=""
-FIRST_RUN_MODE=""  # 是否启用首次运行向导
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="123456"
+FIRST_RUN_MODE="false"  # 禁用首次运行向导
 
 # 显示欢迎信息
 show_banner() {
@@ -1153,47 +1153,22 @@ EOF
 }
 
 # 配置管理员账户
-configure_admin_account() {
-    echo -e "${YELLOW}配置管理员账户${NC}"
-    echo "您可以设置初始管理员账户信息，或使用默认值。"
+config_admin_account() {
+    echo -e "${WHITE}配置系统管理员账户${NC}"
     
-    # 提供首次运行引导选项
-    echo -e "${WHITE}请选择管理员账户设置方式:${NC}"
-    echo -e "1) 现在设置管理员账户"
-    echo -e "2) 启用首次运行向导（系统启动后将提示创建管理员账户）"
-    read -p "> " admin_mode_choice
+    # 管理员账户使用默认值
+    ADMIN_USERNAME=$DEFAULT_ADMIN_USERNAME
+    ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD
+    FIRST_RUN_MODE="false"
     
-    if [ "$admin_mode_choice" = "2" ]; then
-        FIRST_RUN_MODE="true"
-        echo -e "${GREEN}已启用首次运行向导，系统启动后将引导您创建管理员账户。${NC}"
-        echo ""
-        return
-    fi
-    
-    # 管理员用户名
-    echo -e "请输入管理员用户名 ${CYAN}[默认: $DEFAULT_ADMIN_USERNAME]${NC}:"
-    read -p "> " input_admin_username
-    ADMIN_USERNAME=${input_admin_username:-$DEFAULT_ADMIN_USERNAME}
-    
-    # 管理员密码
-    echo -e "请输入管理员密码 ${CYAN}[默认: $DEFAULT_ADMIN_PASSWORD]${NC}:"
-    read -p "> " input_admin_password
-    ADMIN_PASSWORD=${input_admin_password:-$DEFAULT_ADMIN_PASSWORD}
-    
-    # 验证密码
-    if [ "$input_admin_password" != "" ]; then
-        echo -e "请再次输入管理员密码进行确认:"
-        read -p "> " confirm_admin_password
-        
-        if [ "$ADMIN_PASSWORD" != "$confirm_admin_password" ]; then
-            echo -e "${RED}密码不匹配，请重新设置。${NC}"
-            configure_admin_account
-            return
-        fi
-    fi
-    
-    echo -e "${GREEN}管理员账户设置完成!${NC}"
-    echo ""
+    echo -e "${GREEN}管理员账户已配置为默认值: $ADMIN_USERNAME / $ADMIN_PASSWORD${NC}"
+    echo -e "注意: 请在系统首次登录后立即修改默认密码"
+}
+
+# 交互式配置 - 管理员向导模式
+config_admin_mode() {
+    # 使用默认值，跳过交互
+    FIRST_RUN_MODE="false"
 }
 
 # 主函数
@@ -1204,30 +1179,11 @@ main() {
     interactive_config
     
     # 配置管理员账户
-    configure_admin_account
+    config_admin_account
     
-    # 根据配置模式处理管理员账户
-    if [ "$FIRST_RUN_MODE" = "true" ]; then
-        echo -e "${YELLOW}已启用首次运行向导模式，将在系统首次启动时创建管理员账户。${NC}"
-        # 使用默认值，但标记为首次运行模式，不会实际创建管理员账户
-        ADMIN_USERNAME=$DEFAULT_ADMIN_USERNAME
-        ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD
-        
-        # 修改setup-db.sql，去掉初始管理员账户创建
-        sed -i '/-- 初始管理员账户/,/ON CONFLICT (username) DO NOTHING;/d' "${INSTALL_DIR}/setup-db.sql"
-    else
-        # 生成管理员密码哈希
-        echo -e "${YELLOW}生成管理员账户...${NC}"
-        ADMIN_PASSWORD_HASH=$(docker run --rm miaochi/bnpallet-backend:latest node -e "const bcrypt = require('bcrypt'); console.log(bcrypt.hashSync('$ADMIN_PASSWORD', 10))")
-        if [ -z "$ADMIN_PASSWORD_HASH" ]; then
-            echo -e "${RED}生成密码哈希失败，将使用默认密码哈希。${NC}"
-            # 默认的密码哈希值对应 "123456"
-            ADMIN_PASSWORD_HASH='$2b$10$oeFSfeVH9UYl1sOQBF5XSef9nQCf/B41kKO3LYh8xFSPegBfm2Ja.'
-        fi
-        
-        # 修改setup-db.sql中的管理员信息
-        sed -i "s/INSERT INTO public\.users (username, password, name, status, is_admin, company) VALUES ('admin', '.*', '系统管理员', 'ACTIVE', true, '帮你品牌')/INSERT INTO public.users (username, password, name, status, is_admin, company) VALUES ('$ADMIN_USERNAME', '$ADMIN_PASSWORD_HASH', '系统管理员', 'ACTIVE', true, '帮你品牌')/" "${INSTALL_DIR}/setup-db.sql"
-    fi
+    # 使用默认的管理员账户，setup-db.sql已经包含了admin/123456账户
+    echo -e "${GREEN}将使用默认的管理员账户: admin/123456${NC}"
+    echo -e "${GREEN}注意: 请在系统首次登录后立即修改默认密码${NC}"
     
     generate_env_file
     download_files
