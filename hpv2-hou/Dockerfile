@@ -21,8 +21,24 @@ RUN npm ci --only=production
 COPY . .
 
 # 创建必要的目录并设置权限
-RUN mkdir -p uploads logs temp && \
-    chmod -R 755 uploads logs temp
+RUN mkdir -p uploads/images uploads/materials uploads/qrcode logs temp && \
+    chmod -R 777 uploads logs temp
+
+# 创建启动脚本
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo '# 确保上传目录存在并有正确权限' >> /app/start.sh && \
+    echo 'mkdir -p /app/uploads/images /app/uploads/materials /app/uploads/qrcode' >> /app/start.sh && \
+    echo 'chmod -R 777 /app/uploads' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# 确保软链接创建正确' >> /app/start.sh && \
+    echo 'if [ -d /app/src/uploads ] && [ ! -L /app/src/uploads ]; then' >> /app/start.sh && \
+    echo '  rm -rf /app/src/uploads' >> /app/start.sh && \
+    echo '  ln -sf /app/uploads /app/src/uploads' >> /app/start.sh && \
+    echo 'fi' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# 启动应用' >> /app/start.sh && \
+    echo 'exec node src/app.js' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 # 设置端口
 EXPOSE ${PORT}
@@ -32,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://127.0.0.1:${PORT}/health || exit 1
 
 # 启动应用
-CMD ["node", "src/app.js"] 
+CMD ["/app/start.sh"] 

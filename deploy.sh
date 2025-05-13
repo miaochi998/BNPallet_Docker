@@ -773,6 +773,49 @@ verify_services() {
         exit 1
     fi
     
+    # 初始化上传目录和结构
+    echo -e "初始化上传目录和结构..."
+    if ! docker exec bnpallet-backend mkdir -p /app/uploads/images /app/uploads/materials /app/uploads/qrcode; then
+        echo -e "${YELLOW}警告: 创建上传目录失败，将尝试其他方法${NC}"
+        # 尝试另一种方式创建目录
+        docker exec bnpallet-backend sh -c "mkdir -p /app/uploads/images /app/uploads/materials /app/uploads/qrcode"
+    fi
+    
+    # 设置目录权限
+    echo -e "设置目录权限..."
+    if ! docker exec bnpallet-backend chmod -R 777 /app/uploads; then
+        echo -e "${YELLOW}警告: 设置目录权限失败，可能影响文件上传功能${NC}"
+    fi
+    
+    # 创建软链接，将后端上传目录指向共享卷
+    echo -e "创建软链接..."
+    if ! docker exec bnpallet-backend sh -c "if [ -d /app/src/uploads ] && [ ! -L /app/src/uploads ]; then rm -rf /app/src/uploads; ln -s /app/uploads /app/src/uploads; fi"; then
+        echo -e "${YELLOW}警告: 创建软链接失败，将尝试其他方法${NC}"
+        # 尝试另一种方式创建软链接
+        docker exec bnpallet-backend sh -c "rm -rf /app/src/uploads 2>/dev/null || true; ln -sf /app/uploads /app/src/uploads"
+    fi
+    
+    # 验证目录结构
+    echo -e "验证目录结构..."
+    if ! docker exec bnpallet-backend ls -la /app/uploads | grep -q "images\|materials\|qrcode"; then
+        echo -e "${YELLOW}警告: 上传目录结构验证失败，可能影响文件上传功能${NC}"
+    else
+        echo -e "${GREEN}上传目录结构创建成功 ✓${NC}"
+    fi
+    
+    if ! docker exec bnpallet-backend ls -la /app/src | grep -q "uploads -> /app/uploads"; then
+        echo -e "${YELLOW}警告: 软链接验证失败，可能影响文件上传功能${NC}"
+    else
+        echo -e "${GREEN}软链接创建成功 ✓${NC}"
+    fi
+    
+    # 重启后端和前端服务，确保更改生效
+    echo -e "重启服务应用更改..."
+    docker-compose restart backend frontend
+    
+    # 稍等片刻，确保服务重启完成
+    sleep 5
+    
     # 检查前端可访问性
     echo -e "检查前端服务..."
     if curl -s -o /dev/null -w "%{http_code}" http://localhost:$FRONTEND_PORT_EXPOSED | grep -q "200\|301\|302"; then
