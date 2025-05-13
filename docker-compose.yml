@@ -107,6 +107,9 @@ services:
       - FRONTEND_DOMAIN=${FRONTEND_DOMAIN:-localhost}
       - ACCESS_TYPE=${ACCESS_TYPE:-ip}
       - ACCESS_IP=${ACCESS_IP:-localhost}
+    volumes:
+      # 共享后端上传目录，使前端能访问上传的文件
+      - backend_uploads:/usr/share/nginx/html/uploads
     ports:
       - "${FRONTEND_PORT_EXPOSED:-6017}:${FRONTEND_PORT:-6017}"
     networks:

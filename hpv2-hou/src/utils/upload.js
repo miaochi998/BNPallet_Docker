@@ -9,7 +9,8 @@ const { MAX_FILE_SIZE, MAX_ZIP_SIZE } = require('../config/env');
 const createUploadDirs = () => {
   const dirs = [
     path.join(__dirname, '../uploads/images'),
-    path.join(__dirname, '../uploads/materials')
+    path.join(__dirname, '../uploads/materials'),
+    path.join(__dirname, '../uploads/qrcode')
   ];
   
   dirs.forEach(dir => {
@@ -96,7 +97,7 @@ const imageUpload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: MAX_FILE_SIZE  // 默认20MB
+    fileSize: MAX_FILE_SIZE * 1024 * 1024  // 默认20MB
   }
 });
 
@@ -105,7 +106,7 @@ const materialUpload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: MAX_ZIP_SIZE  // 默认500MB
+    fileSize: MAX_ZIP_SIZE * 1024 * 1024  // 默认500MB
   }
 });
 
