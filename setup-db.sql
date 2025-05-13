@@ -517,8 +517,8 @@ CREATE VIEW public.v_seller_recycle_bin AS
   WHERE ((r.owner_type)::text = 'SELLER'::text);
 
 --
--- 初始管理员账户 (密码: admin123)
+-- 初始管理员账户 (密码: 123456)
 --
 INSERT INTO public.users (username, password, name, status, is_admin, company) 
-VALUES ('admin', '$2b$10$3Kq3LUMljiYKNK9fPlO8nOgRxUzL0Ame5cQUGBITGbDI3Rt9EW9cG', '系统管理员', 'ACTIVE', true, '帮你品牌')
+VALUES ('admin', '$2b$10$oeFSfeVH9UYl1sOQBF5XSef9nQCf/B41kKO3LYh8xFSPegBfm2Ja.', '系统管理员', 'ACTIVE', true, '帮你品牌')
 ON CONFLICT (username) DO NOTHING; 

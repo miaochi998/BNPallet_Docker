@@ -54,6 +54,13 @@ show_completion() {
     if [ "$ACCESS_TYPE" = "domain" ] && [ -n "$FRONTEND_DOMAIN" ]; then
         echo -e "前端访问地址: ${CYAN}http://${FRONTEND_DOMAIN}:${FRONTEND_PORT_EXPOSED}${NC}"
     else
+        # 确保ACCESS_IP不为空
+        if [ -z "$ACCESS_IP" ]; then
+            ACCESS_IP=$(hostname -I | awk '{print $1}')
+            if [ -z "$ACCESS_IP" ]; then
+                ACCESS_IP="localhost"
+            fi
+        fi
         echo -e "前端访问地址: ${CYAN}http://${ACCESS_IP}:${FRONTEND_PORT_EXPOSED}${NC}"
     fi
     echo -e "后端API地址: ${CYAN}http://${ACCESS_IP}:${BACKEND_PORT_EXPOSED}${NC}"
@@ -61,7 +68,7 @@ show_completion() {
     
     echo -e "${WHITE}系统管理员账号:${NC}"
     echo -e "账号: ${CYAN}admin${NC}"
-    echo -e "密码: ${CYAN}admin123${NC} (建议首次登录后立即修改)"
+    echo -e "密码: ${CYAN}123456${NC} (建议首次登录后立即修改)"
     echo -e ""
     
     echo -e "${WHITE}数据库信息:${NC}"
@@ -102,8 +109,16 @@ gen_config_record() {
     if [ "$ACCESS_TYPE" = "domain" ] && [ -n "$FRONTEND_DOMAIN" ]; then
         FRONTEND_ACCESS_URL="http://${FRONTEND_DOMAIN}:${FRONTEND_PORT_EXPOSED}"
     else
+        # 确保ACCESS_IP不为空
+        if [ -z "$ACCESS_IP" ]; then
+            ACCESS_IP=$(hostname -I | awk '{print $1}')
+            if [ -z "$ACCESS_IP" ]; then
+                ACCESS_IP="localhost"
+            fi
+        fi
         FRONTEND_ACCESS_URL="http://${ACCESS_IP}:${FRONTEND_PORT_EXPOSED}"
     fi
+    # 确保后端API地址也使用有效的IP
     local BACKEND_ACCESS_URL="http://${ACCESS_IP}:${BACKEND_PORT_EXPOSED}"
     
     cat > $CONFIG_FILE << EOF
@@ -123,7 +138,7 @@ gen_config_record() {
 系统管理员账号:
 ------------------------------------------
 账号: admin
-密码: admin123 (建议首次登录后立即修改)
+密码: 123456 (建议首次登录后立即修改)
 
 ------------------------------------------
 数据库信息:
