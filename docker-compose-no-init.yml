@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库服务
+  postgres:
+    image: postgres:16-alpine
+    container_name: bnpallet-postgres
+    restart: always
+    pull_policy: if_not_present
+    environment:
+      # 数据库配置 - 可通过.env文件自定义
+      POSTGRES_USER: ${DB_USER:-bnpallet}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-bnpallet123456}
+      POSTGRES_DB: ${DB_NAME:-bnpallet}
+    volumes:
+      # 数据持久化
+      - postgres_data:/var/lib/postgresql/data
+      # 初始化数据库结构已移除，避免服务器重启后出现挂载问题
+    ports:
+      - "${DB_PORT_EXPOSED:-5432}:5432"
+    healthcheck:
+      # 数据库健康检查
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-bnpallet}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - bnpallet-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+
+  # 后端API服务
+  backend:
+    build:
+      context: ./hpv2-hou
+      dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME:-miaochi}/bnpallet-backend:${TAG:-latest}
+    container_name: bnpallet-backend
+    restart: always
+    pull_policy: if_not_present
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # 应用基本配置
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${BACKEND_PORT:-6016}
+      
+      # 数据库连接配置
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-bnpallet}
+      - DB_USER=${DB_USER:-bnpallet}
+      - DB_PASSWORD=${DB_PASSWORD:-bnpallet123456}
+      
+      # 安全配置
+      - JWT_SECRET=${JWT_SECRET:-WxsLC5j1NT3+sDkWLS6fE/SCAjo5MJOHeH4kSNxtebc=}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-30d}
+      
+      # 文件上传配置
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-20}
+      - MAX_ZIP_SIZE=${MAX_ZIP_SIZE:-500}
+      
+      # CORS配置
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:6017,http://127.0.0.1:6017}
+      
+      # 首次运行配置
+      - FIRST_RUN_MODE=${FIRST_RUN_MODE:-false}
+    volumes:
+      # 持久化上传文件和日志
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    ports:
+      - "${BACKEND_PORT_EXPOSED:-6016}:${BACKEND_PORT:-6016}"
+    networks:
+      - bnpallet-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+
+  # 前端Web服务
+  frontend:
+    build:
+      context: ./hpv2-front
+      dockerfile: Dockerfile
+    image: ${DOCKER_HUB_USERNAME:-miaochi}/bnpallet-frontend:${TAG:-latest}
+    container_name: bnpallet-frontend
+    restart: always
+    pull_policy: if_not_present
+    depends_on:
+      # 确保后端服务已成功启动并可用
+      backend:
+        condition: service_healthy
+    environment:
+      # 前端服务端口配置
+      - NGINX_PORT=${FRONTEND_PORT:-6017}
+      # 后端API服务端口配置
+      - BACKEND_PORT=${BACKEND_PORT:-6016}
+      # 访问配置
+      - FRONTEND_DOMAIN=${FRONTEND_DOMAIN:-localhost}
+      - ACCESS_TYPE=${ACCESS_TYPE:-ip}
+      - ACCESS_IP=${ACCESS_IP:-localhost}
+    volumes:
+      # 共享后端上传目录，使前端能访问上传的文件
+      - backend_uploads:/usr/share/nginx/html/uploads
+    ports:
+      - "${FRONTEND_PORT_EXPOSED:-6017}:${FRONTEND_PORT:-6017}"
+    networks:
+      - bnpallet-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+
+# 网络配置
+networks:
+  bnpallet-network:
+    driver: bridge
+    name: bnpallet-network
+
+# 数据卷配置
+volumes:
+  postgres_data:
+    name: ${VOLUME_PREFIX:-bnpallet}-postgres-data
+  backend_uploads:
+    name: ${VOLUME_PREFIX:-bnpallet}-uploads
+  backend_logs:
+    name: ${VOLUME_PREFIX:-bnpallet}-logs 
