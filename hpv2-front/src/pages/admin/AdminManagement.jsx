@@ -624,7 +624,7 @@ const AdminManagement = () => {
                 { min: 6, message: '密码至少6个字符' }
               ]}
             >
-              <Input.Password placeholder="请设置登录密码，默认123456" />
+              <Input.Password placeholder="请设置登录密码，默认123456" disabled />
             </Form.Item>
             <Form.Item
               name="confirm_password"
@@ -642,7 +642,7 @@ const AdminManagement = () => {
                 }),
               ]}
             >
-              <Input.Password placeholder="请再次输入登录密码，默认123456" />
+              <Input.Password placeholder="请再次输入登录密码，默认123456" disabled />
             </Form.Item>
 
             <Form.Item style={{ marginTop: 24, textAlign: 'right' }}>
@@ -686,7 +686,7 @@ const AdminManagement = () => {
                 { min: 6, message: '密码至少6个字符' }
               ]}
             >
-              <Input.Password placeholder="请设置登录密码，默认123456" />
+              <Input.Password placeholder="请设置登录密码，默认123456" disabled />
             </Form.Item>
             <Form.Item
               name="confirm_password"
@@ -703,7 +703,7 @@ const AdminManagement = () => {
                 }),
               ]}
             >
-              <Input.Password placeholder="请再次输入登录密码，默认123456" />
+              <Input.Password placeholder="请再次输入登录密码，默认123456" disabled />
             </Form.Item>
             
             <Form.Item style={{ marginTop: 24, textAlign: 'right' }}>

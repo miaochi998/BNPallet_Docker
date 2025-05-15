@@ -66,8 +66,20 @@ const StaticContentManagement = () => {
 
   // 打开编辑器
   const handleEdit = () => {
-    setEditingContent(contents[activeKey] || '');
+    // 确保使用当前激活的选项卡对应的内容
+    const currentContent = contents[activeKey] || '';
+    setEditingContent(currentContent);
     setEditorVisible(true);
+  };
+
+  // 关闭编辑器
+  const handleCloseEditor = () => {
+    setEditorVisible(false);
+    // 重置编辑器状态
+    if (editor) {
+      editor.destroy();
+      setEditor(null);
+    }
   };
 
   // 保存编辑内容
@@ -197,6 +209,15 @@ const StaticContentManagement = () => {
     );
   };
 
+  // 处理选项卡变化
+  const handleTabChange = (newActiveKey) => {
+    // 如果编辑器打开，切换选项卡时关闭编辑器
+    if (editorVisible) {
+      setEditorVisible(false);
+    }
+    setActiveKey(newActiveKey);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -214,7 +235,7 @@ const StaticContentManagement = () => {
 
       <Tabs 
         activeKey={activeKey} 
-        onChange={setActiveKey}
+        onChange={handleTabChange}
         className={styles.tabs}
       >
         {PAGE_TYPES.map(({ key, label, description }) => (
@@ -234,11 +255,11 @@ const StaticContentManagement = () => {
         title={`编辑${PAGE_TYPES.find(item => item.key === activeKey)?.label || ''}内容`}
         placement="right"
         width={1500}
-        onClose={() => setEditorVisible(false)}
+        onClose={handleCloseEditor}
         open={editorVisible}
         extra={
           <Space>
-            <Button onClick={() => setEditorVisible(false)}>取消</Button>
+            <Button onClick={handleCloseEditor}>取消</Button>
             <Button 
               type="primary" 
               onClick={handleSave}
@@ -248,6 +269,7 @@ const StaticContentManagement = () => {
             </Button>
           </Space>
         }
+        destroyOnClose={true}
       >
         <div className={styles.editorContainer}>
           <Toolbar
@@ -260,6 +282,7 @@ const StaticContentManagement = () => {
             defaultConfig={editorConfig}
             value={editingContent}
             onCreated={setEditor}
+            onChange={editor => setEditingContent(editor.getHtml())}
             mode="default"
             style={{ height: 'calc(100vh - 250px)', overflowY: 'hidden' }}
           />
