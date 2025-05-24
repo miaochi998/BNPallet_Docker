@@ -9,6 +9,9 @@ const pool = require('../../config/db');
 const fs = require('fs');
 const path = require('path');
 
+// 增加延迟处理，避免并发上传导致的问题
+const delayPromise = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * 1. 图片上传接口
  * 路径: /pallet/attachments/image
@@ -80,6 +83,17 @@ router.post('/image',
           path: req.file.path
         }
       });
+      
+      // 如果是用户头像或二维码，为避免并发冲突，增加少量随机延迟
+      if (entity_type === 'USER' && upload_type) {
+        const randomDelay = Math.floor(Math.random() * 200) + 50; // 50-250ms随机延迟
+        logger.info(`用户${upload_type}上传，随机延迟${randomDelay}ms`, {
+          userId: req.user.id,
+          entityId: entity_id,
+          uploadType: upload_type
+        });
+        await delayPromise(randomDelay);
+      }
       
       // 如果是品牌LOGO或用户头像/二维码，先删除旧的图片（包括数据库记录和文件）
       if (entity_type === 'BRAND' || (entity_type === 'USER' && upload_type)) {
@@ -355,6 +369,31 @@ router.post('/image',
           responseData.avatar = attachment.file_path;
         } else if (upload_type === 'qrcode') {
           responseData.wechat_qrcode = attachment.file_path;
+        }
+        
+        // 获取最新的用户信息，确保返回正确的数据
+        try {
+          const { rows } = await pool.query(
+            'SELECT avatar, wechat_qrcode FROM users WHERE id = $1',
+            [entity_id]
+          );
+          
+          if (rows.length > 0) {
+            logger.info('最终用户图片状态', {
+              userId: entity_id,
+              avatar: rows[0].avatar,
+              wechat_qrcode: rows[0].wechat_qrcode
+            });
+            
+            // 在响应中包含两个字段的最新值
+            responseData.avatar_final = rows[0].avatar;
+            responseData.wechat_qrcode_final = rows[0].wechat_qrcode;
+          }
+        } catch (error) {
+          logger.error('获取最终用户图片状态失败', {
+            error: error.message,
+            userId: entity_id
+          });
         }
       } else if (entity_type === 'BRAND') {
         logger.info('处理品牌Logo上传', {

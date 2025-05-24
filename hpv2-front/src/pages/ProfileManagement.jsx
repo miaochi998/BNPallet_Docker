@@ -21,6 +21,10 @@ const ProfileManagement = () => {
   const [qrcodeUrl, setQrcodeUrl] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   
+  // 追踪图片加载错误次数，防止无限循环
+  const [avatarErrorCount, setAvatarErrorCount] = useState(0);
+  const [qrcodeErrorCount, setQrcodeErrorCount] = useState(0);
+  
   // 编辑相关状态
   const [editingKey, setEditingKey] = useState('');
   const [newStore, setNewStore] = useState(null);
@@ -46,6 +50,10 @@ const ProfileManagement = () => {
           email: profileData.email,
           company: profileData.company
         });
+        
+        // 重置错误计数
+        setAvatarErrorCount(0);
+        setQrcodeErrorCount(0);
         
         // 设置头像和二维码
         if (profileData.avatar) {
@@ -100,8 +108,17 @@ const ProfileManagement = () => {
     
     if (info.file.status === 'done') {
       if (info.file.response && info.file.response.success) {
-        const imageUrl = getImageUrl(info.file.response.data.file_path, `?t=${Date.now()}`);
+        // 优先使用服务器返回的最终值
+        const finalAvatarPath = info.file.response.data.avatar_final || info.file.response.data.file_path;
+        const imageUrl = getImageUrl(finalAvatarPath, `?t=${Date.now()}`);
         setAvatarUrl(imageUrl);
+        setAvatarErrorCount(0); // 重置错误计数
+        
+        console.log('头像上传完成，使用路径:', {
+          responseFilePath: info.file.response.data.file_path,
+          finalPath: finalAvatarPath,
+          imageUrl
+        });
         
         // 显示成功提示
         antMessage.success({
@@ -113,8 +130,10 @@ const ProfileManagement = () => {
           },
         });
         
-        // 刷新用户信息
-        dispatch(getUserInfoAsync());
+        // 使用setTimeout延迟刷新用户信息，避免与二维码上传冲突
+        setTimeout(() => {
+          dispatch(getUserInfoAsync());
+        }, 500);
       } else {
         antMessage.error({
           content: info.file.response?.message || '头像上传失败，请稍后重试',
@@ -145,8 +164,17 @@ const ProfileManagement = () => {
     
     if (info.file.status === 'done') {
       if (info.file.response && info.file.response.success) {
-        const imageUrl = getImageUrl(info.file.response.data.file_path, `?t=${Date.now()}`);
+        // 优先使用服务器返回的最终值
+        const finalQrcodePath = info.file.response.data.wechat_qrcode_final || info.file.response.data.file_path;
+        const imageUrl = getImageUrl(finalQrcodePath, `?t=${Date.now()}`);
         setQrcodeUrl(imageUrl);
+        setQrcodeErrorCount(0); // 重置错误计数
+        
+        console.log('二维码上传完成，使用路径:', {
+          responseFilePath: info.file.response.data.file_path,
+          finalPath: finalQrcodePath,
+          imageUrl
+        });
         
         // 显示成功提示
         antMessage.success({
@@ -158,8 +186,10 @@ const ProfileManagement = () => {
           },
         });
         
-        // 刷新用户信息
-        dispatch(getUserInfoAsync());
+        // 使用setTimeout延迟刷新用户信息，避免与头像上传冲突
+        setTimeout(() => {
+          dispatch(getUserInfoAsync());
+        }, 1000);
       } else {
         antMessage.error({
           content: info.file.response?.message || '二维码上传失败，请稍后重试',
@@ -246,7 +276,9 @@ const ProfileManagement = () => {
           }, 1500);
         } else {
           // 刷新用户信息
-          dispatch(getUserInfoAsync());
+          setTimeout(() => {
+            dispatch(getUserInfoAsync());
+          }, 500);
         }
       } else {
         // 失败提示，使用全局提示
@@ -690,7 +722,7 @@ const ProfileManagement = () => {
                 replace_existing: 'true'
               }}
             >
-              {avatarUrl ? (
+              {avatarUrl && avatarErrorCount < 3 ? (
                 <img 
                   src={avatarUrl} 
                   alt="头像" 
@@ -698,7 +730,15 @@ const ProfileManagement = () => {
                   style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                   onError={(e) => {
                     console.error('头像加载失败:', e);
-                    e.target.src = '';
+                    // 增加错误计数，超过阈值后停止尝试加载
+                    setAvatarErrorCount(prev => {
+                      const newCount = prev + 1;
+                      if (newCount >= 3) {
+                        e.target.src = ''; // 只在第三次错误时设置为空
+                        antMessage.error('头像加载失败，请重新上传');
+                      }
+                      return newCount;
+                    });
                   }}
                 />
               ) : (
@@ -878,14 +918,22 @@ const ProfileManagement = () => {
             
             <div className={styles.qrcodeUpload}>
               <div className={styles.qrcodePreview}>
-                {qrcodeUrl ? (
+                {qrcodeUrl && qrcodeErrorCount < 3 ? (
                   <img 
                     src={qrcodeUrl} 
                     alt="微信二维码" 
                     className={styles.qrcodeImage}
                     onError={(e) => {
                       console.error('二维码加载失败:', e);
-                      e.target.src = '';
+                      // 增加错误计数，超过阈值后停止尝试加载
+                      setQrcodeErrorCount(prev => {
+                        const newCount = prev + 1;
+                        if (newCount >= 3) {
+                          e.target.src = ''; // 只在第三次错误时设置为空
+                          antMessage.error('二维码加载失败，请重新上传');
+                        }
+                        return newCount;
+                      });
                     }}
                   />
                 ) : (

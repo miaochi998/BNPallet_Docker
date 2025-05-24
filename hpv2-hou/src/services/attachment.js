@@ -94,10 +94,35 @@ const saveAttachment = async (fileData, file, userId) => {
       }
       
       if (field) {
+        // 使用FOR UPDATE锁定用户记录，防止并发更新冲突
+        await client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [fileData.entity_id]);
+        
+        // 只更新指定的字段，不影响其他字段
         await client.query(
           `UPDATE users SET ${field} = $1, updated_at = NOW() WHERE id = $2`,
           [relativePath, fileData.entity_id]
         );
+        
+        // 记录日志，便于调试
+        console.log('[ATTACHMENT SERVICE] 已更新用户资料字段', {
+          userId: fileData.entity_id,
+          field: field,
+          filePath: relativePath
+        });
+        
+        // 再次查询确认更新成功
+        const { rows: userCheck } = await client.query(
+          `SELECT ${field} FROM users WHERE id = $1`,
+          [fileData.entity_id]
+        );
+        
+        if (userCheck.length > 0) {
+          console.log('[ATTACHMENT SERVICE] 更新后的用户字段值', {
+            userId: fileData.entity_id,
+            field: field,
+            value: userCheck[0][field]
+          });
+        }
       }
     }
     
