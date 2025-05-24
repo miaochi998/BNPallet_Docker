@@ -8,14 +8,15 @@ const { MAX_FILE_SIZE, MAX_ZIP_SIZE } = require('../config/env');
 // 确保上传目录存在
 const createUploadDirs = () => {
   const dirs = [
-    path.join(__dirname, '../uploads/images'),
-    path.join(__dirname, '../uploads/materials'),
-    path.join(__dirname, '../uploads/qrcode')
+    path.join(__dirname, '../../uploads/images'),
+    path.join(__dirname, '../../uploads/materials'),
+    path.join(__dirname, '../../uploads/qrcode')
   ];
   
   dirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
       mkdirp.sync(dir);
+      console.log(`[UPLOAD] 创建上传目录: ${dir}`);
     }
   });
 };
@@ -33,12 +34,17 @@ const storage = multer.diskStorage({
     const isMaterial = /\.(zip|rar|7z)$/i.test(file.originalname);
     
     if (isImage) {
-      uploadPath = path.join(__dirname, '../uploads/images');
+      uploadPath = path.join(__dirname, '../../uploads/images');
     } else if (isMaterial) {
-      uploadPath = path.join(__dirname, '../uploads/materials');
+      uploadPath = path.join(__dirname, '../../uploads/materials');
     } else {
       // 默认路径
-      uploadPath = path.join(__dirname, '../uploads');
+      uploadPath = path.join(__dirname, '../../uploads');
+    }
+    
+    // 确保目录存在
+    if (!fs.existsSync(uploadPath)) {
+      mkdirp.sync(uploadPath);
     }
     
     console.log('[UPLOAD] 设置上传目录', {

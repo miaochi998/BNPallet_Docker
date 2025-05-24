@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const path = require('path');
+const fs = require('fs');
 
 /**
  * 保存附件信息到数据库
@@ -31,11 +32,41 @@ const saveAttachment = async (fileData, file, userId) => {
     throw new Error('不支持的文件类型');
   }
   
+  // 确保目标目录存在
+  const uploadDir = path.join(__dirname, '../../uploads', fileType === 'IMAGE' ? 'images' : 'materials');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log(`[ATTACHMENT SERVICE] 创建上传目录: ${uploadDir}`);
+  }
+  
   // 构建文件相对路径，用于前端访问
+  // 注意：路径中不应包含src，因为前端直接从/uploads访问
   const relativePath = `/uploads/${fileType === 'IMAGE' ? 'images' : 'materials'}/${path.basename(file.path)}`;
+  
+  // 移动文件到正确的位置
+  const destinationPath = path.join(uploadDir, path.basename(file.path));
+  try {
+    // 检查源文件是否存在
+    if (fs.existsSync(file.path)) {
+      // 如果目标文件已存在，先删除
+      if (fs.existsSync(destinationPath)) {
+        fs.unlinkSync(destinationPath);
+        console.log(`[ATTACHMENT SERVICE] 删除已存在的目标文件: ${destinationPath}`);
+      }
+      
+      // 复制文件到目标位置
+      fs.copyFileSync(file.path, destinationPath);
+      console.log(`[ATTACHMENT SERVICE] 文件已复制到: ${destinationPath}`);
+    } else {
+      console.log(`[ATTACHMENT SERVICE] 源文件不存在: ${file.path}`);
+    }
+  } catch (error) {
+    console.error(`[ATTACHMENT SERVICE] 移动文件失败: ${error.message}`);
+  }
   
   console.log('[ATTACHMENT SERVICE] 构建文件路径', {
     originalPath: file.path,
+    destinationPath: destinationPath,
     relativePath: relativePath,
     fileName: path.basename(file.path),
     entityType: fileData.entity_type,
@@ -93,6 +124,10 @@ const saveAttachment = async (fileData, file, userId) => {
         field = isAvatar ? 'avatar' : (isQrcode ? 'wechat_qrcode' : null);
       }
       
+      // 用于返回最终状态的变量
+      let avatar_final = null;
+      let wechat_qrcode_final = null;
+      
       if (field) {
         // 使用FOR UPDATE锁定用户记录，防止并发更新冲突
         await client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [fileData.entity_id]);
@@ -110,20 +145,27 @@ const saveAttachment = async (fileData, file, userId) => {
           filePath: relativePath
         });
         
-        // 再次查询确认更新成功
+        // 再次查询确认更新成功，并获取两个字段的最终值
         const { rows: userCheck } = await client.query(
-          `SELECT ${field} FROM users WHERE id = $1`,
+          `SELECT avatar, wechat_qrcode FROM users WHERE id = $1`,
           [fileData.entity_id]
         );
         
         if (userCheck.length > 0) {
-          console.log('[ATTACHMENT SERVICE] 更新后的用户字段值', {
+          avatar_final = userCheck[0].avatar;
+          wechat_qrcode_final = userCheck[0].wechat_qrcode;
+          
+          console.log('[ATTACHMENT SERVICE] 更新后的用户字段最终值', {
             userId: fileData.entity_id,
-            field: field,
-            value: userCheck[0][field]
+            avatar_final: avatar_final,
+            wechat_qrcode_final: wechat_qrcode_final
           });
         }
       }
+      
+      // 添加最终状态字段到返回结果
+      rows[0].avatar_final = avatar_final;
+      rows[0].wechat_qrcode_final = wechat_qrcode_final;
     }
     
     await client.query('COMMIT');

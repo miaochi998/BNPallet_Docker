@@ -130,10 +130,35 @@ const ProfileManagement = () => {
           },
         });
         
-        // 使用setTimeout延迟刷新用户信息，避免与二维码上传冲突
-        setTimeout(() => {
-          dispatch(getUserInfoAsync());
-        }, 500);
+        // 立即重新获取用户完整资料，确保状态同步
+        try {
+          const profileRes = await getProfile();
+          if (profileRes.data) {
+            const profileData = profileRes.data;
+            
+            // 更新表单数据
+            profileForm.setFieldsValue({
+              username: profileData.username,
+              name: profileData.name,
+              phone: profileData.phone,
+              email: profileData.email,
+              company: profileData.company
+            });
+            
+            // 如果数据库中有头像和二维码，更新本地状态
+            if (profileData.avatar) {
+              setAvatarUrl(getImageUrl(profileData.avatar, `?t=${Date.now()}`));
+            }
+            
+            if (profileData.wechat_qrcode) {
+              setQrcodeUrl(getImageUrl(profileData.wechat_qrcode, `?t=${Date.now()}`));
+            }
+            
+            console.log('上传头像后重新获取资料成功:', profileData);
+          }
+        } catch (error) {
+          console.error('上传头像后重新获取资料失败:', error);
+        }
       } else {
         antMessage.error({
           content: info.file.response?.message || '头像上传失败，请稍后重试',
@@ -186,10 +211,35 @@ const ProfileManagement = () => {
           },
         });
         
-        // 使用setTimeout延迟刷新用户信息，避免与头像上传冲突
-        setTimeout(() => {
-          dispatch(getUserInfoAsync());
-        }, 1000);
+        // 立即重新获取用户完整资料，确保状态同步
+        try {
+          const profileRes = await getProfile();
+          if (profileRes.data) {
+            const profileData = profileRes.data;
+            
+            // 更新表单数据
+            profileForm.setFieldsValue({
+              username: profileData.username,
+              name: profileData.name,
+              phone: profileData.phone,
+              email: profileData.email,
+              company: profileData.company
+            });
+            
+            // 如果数据库中有头像和二维码，更新本地状态
+            if (profileData.avatar) {
+              setAvatarUrl(getImageUrl(profileData.avatar, `?t=${Date.now()}`));
+            }
+            
+            if (profileData.wechat_qrcode) {
+              setQrcodeUrl(getImageUrl(profileData.wechat_qrcode, `?t=${Date.now()}`));
+            }
+            
+            console.log('上传二维码后重新获取资料成功:', profileData);
+          }
+        } catch (error) {
+          console.error('上传二维码后重新获取资料失败:', error);
+        }
       } else {
         antMessage.error({
           content: info.file.response?.message || '二维码上传失败，请稍后重试',

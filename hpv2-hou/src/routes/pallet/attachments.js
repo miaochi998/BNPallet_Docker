@@ -112,11 +112,14 @@ router.post('/image',
               fieldName: fieldName
             });
             
-            // 查询用户当前图片路径
-            const userResult = await pool.query(
-              `SELECT ${fieldName} FROM users WHERE id = $1`,
+            // 锁定用户记录，防止并发更新冲突
+            const lockResult = await pool.query(
+              'SELECT id, avatar, wechat_qrcode FROM users WHERE id = $1 FOR UPDATE',
               [entity_id]
             );
+            
+            // 查询用户当前图片路径
+            const userResult = lockResult;
             
             // 如果用户存在且有对应的图片路径
             if (userResult.rows.length > 0 && userResult.rows[0][fieldName]) {
@@ -125,7 +128,8 @@ router.post('/image',
               logger.info('获取到用户当前图片路径', {
                 userId: entity_id,
                 uploadType: upload_type,
-                currentFilePath: currentFilePath
+                currentFilePath: currentFilePath,
+                userRecord: userResult.rows[0]
               });
               
               // 使用精确的文件路径查询
