@@ -733,11 +733,17 @@ download_files() {
             curl -s -o $INSTALL_DIR/docker-compose.yml $REPO_URL/docker-compose-no-init.yml
         else
             # 如果模板不存在，则下载标准模板并删除初始化脚本挂载行
-            echo -e "下载标准docker-compose模板并删除初始化脚本挂载..."
+            echo -e "下载标准docker-compose模板..."
             curl -s -o $INSTALL_DIR/docker-compose.yml $REPO_URL/docker-compose.yml
             
-            # 删除初始化脚本挂载行
-            sed -i '/setup-db.sql/d' $INSTALL_DIR/docker-compose.yml
+            # 删除初始化脚本挂载行 - 已注释，确保数据库初始化脚本始终被挂载
+            # 注意：保留setup-db.sql挂载配置是为了确保在PostgreSQL容器首次启动时能正确初始化数据库
+            # 如果数据库卷已经存在，PostgreSQL不会再次执行初始化脚本，所以这不会影响现有数据
+            # sed -i '/setup-db.sql/d' $INSTALL_DIR/docker-compose.yml
+            
+            # 下载数据库初始化脚本
+            echo -e "下载 setup-db.sql..."
+            curl -s -o $INSTALL_DIR/setup-db.sql $REPO_URL/setup-db.sql
         fi
     else
         echo -e "首次部署，将使用包含初始化脚本的配置..."
