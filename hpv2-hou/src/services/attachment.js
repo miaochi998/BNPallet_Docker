@@ -109,19 +109,15 @@ const saveAttachment = async (fileData, file, userId) => {
       entityId: fileData.entity_id
     });
     
-    // 如果是用户上传，自动更新对应字段
+    // 如果是用户上传，根据upload_type确定更新哪个字段
     if (fileData.entity_type === 'USER' && fileType === 'IMAGE') {
-      // 根据upload_type或文件名判断是头像还是二维码
+      // 默认不更新任何字段
       let field = null;
       
+      // 只有明确指定了upload_type才进行更新
       if (fileData.upload_type) {
         field = fileData.upload_type === 'avatar' ? 'avatar' : 
                 (fileData.upload_type === 'qrcode' ? 'wechat_qrcode' : null);
-      } else {
-        // 根据文件名推断
-        const isAvatar = file.originalname.toLowerCase().includes('avatar');
-        const isQrcode = file.originalname.toLowerCase().includes('qrcode');
-        field = isAvatar ? 'avatar' : (isQrcode ? 'wechat_qrcode' : null);
       }
       
       // 用于返回最终状态的变量
@@ -145,7 +141,7 @@ const saveAttachment = async (fileData, file, userId) => {
           filePath: relativePath
         });
         
-        // 再次查询确认更新成功，并获取两个字段的最终值
+        // 查询用户所有需要的字段
         const { rows: userCheck } = await client.query(
           `SELECT avatar, wechat_qrcode FROM users WHERE id = $1`,
           [fileData.entity_id]

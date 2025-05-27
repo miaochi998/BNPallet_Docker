@@ -8,6 +8,17 @@ import { getImageUrl, getApiBaseUrl } from '../config/urls';
 import axios from 'axios';
 import styles from './ProfileManagement.module.css';
 
+// 创建防抖函数
+const debounce = (fn, delay) => {
+  let timer = null;
+  return function(...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+};
+
 const ProfileManagement = () => {
   const { message: antMessage } = App.useApp();
   const dispatch = useDispatch();
@@ -25,13 +36,43 @@ const ProfileManagement = () => {
   const [avatarErrorCount, setAvatarErrorCount] = useState(0);
   const [qrcodeErrorCount, setQrcodeErrorCount] = useState(0);
   
+  // 添加上传状态跟踪
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [qrcodeUploading, setQrcodeUploading] = useState(false);
+  
+  // 错误提示锁，防止短时间内多次显示相同错误
+  const errorLock = useRef(false);
+  
   // 编辑相关状态
   const [editingKey, setEditingKey] = useState('');
   const [newStore, setNewStore] = useState(null);
   const [editForm] = Form.useForm();
   
+  // 全局错误处理函数
+  const handleError = (message, error) => {
+    console.error(message, error);
+    if (!errorLock.current) {
+      errorLock.current = true;
+      antMessage.error({
+        content: typeof message === 'string' ? message : '操作失败，请稍后重试',
+        duration: 3,
+        style: {
+          fontSize: '16px',
+          marginTop: '20vh',
+        },
+        onClose: () => {
+          setTimeout(() => {
+            errorLock.current = false;
+          }, 1000);
+        }
+      });
+    }
+  };
+  
   // 获取个人资料和店铺信息
   const fetchProfileData = async () => {
+    if (loading) return; // 防止重复请求
+    
     setLoading(true);
     try {
       const [profileRes, storesRes] = await Promise.all([
@@ -59,11 +100,15 @@ const ProfileManagement = () => {
         if (profileData.avatar) {
           // 添加时间戳避免缓存
           setAvatarUrl(getImageUrl(profileData.avatar, `?t=${Date.now()}`));
+        } else {
+          setAvatarUrl('');
         }
         
         if (profileData.wechat_qrcode) {
           // 添加时间戳避免缓存
           setQrcodeUrl(getImageUrl(profileData.wechat_qrcode, `?t=${Date.now()}`));
+        } else {
+          setQrcodeUrl('');
         }
       }
       
@@ -71,16 +116,27 @@ const ProfileManagement = () => {
         setStores(storesRes.data);
       }
     } catch (error) {
-      console.error('获取个人资料失败:', error);
-      antMessage.error('获取个人资料失败，请稍后重试');
+      handleError('获取个人资料失败，请稍后重试', error);
     } finally {
       setLoading(false);
     }
   };
   
+  // 使用防抖处理的数据获取函数
+  const debouncedFetchData = useRef(debounce(fetchProfileData, 300)).current;
+  
   // 组件加载时获取数据
   useEffect(() => {
     fetchProfileData();
+    
+    // 清理函数
+    return () => {
+      // 确保组件卸载时，所有状态被重置
+      setAvatarErrorCount(0);
+      setQrcodeErrorCount(0);
+      setAvatarUploading(false);
+      setQrcodeUploading(false);
+    };
   }, []);
   
   // 处理头像上传前的校验
@@ -97,6 +153,8 @@ const ProfileManagement = () => {
       return false;
     }
     
+    // 设置上传状态为true
+    setAvatarUploading(true);
     return true; // 返回true允许上传
   };
   
@@ -107,6 +165,9 @@ const ProfileManagement = () => {
     }
     
     if (info.file.status === 'done') {
+      // 上传完成，重置上传状态
+      setAvatarUploading(false);
+      
       if (info.file.response && info.file.response.success) {
         // 优先使用服务器返回的最终值
         const finalAvatarPath = info.file.response.data.avatar_final || info.file.response.data.file_path;
@@ -130,54 +191,17 @@ const ProfileManagement = () => {
           },
         });
         
-        // 立即重新获取用户完整资料，确保状态同步
-        try {
-          const profileRes = await getProfile();
-          if (profileRes.data) {
-            const profileData = profileRes.data;
-            
-            // 更新表单数据
-            profileForm.setFieldsValue({
-              username: profileData.username,
-              name: profileData.name,
-              phone: profileData.phone,
-              email: profileData.email,
-              company: profileData.company
-            });
-            
-            // 如果数据库中有头像和二维码，更新本地状态
-            if (profileData.avatar) {
-              setAvatarUrl(getImageUrl(profileData.avatar, `?t=${Date.now()}`));
-            }
-            
-            if (profileData.wechat_qrcode) {
-              setQrcodeUrl(getImageUrl(profileData.wechat_qrcode, `?t=${Date.now()}`));
-            }
-            
-            console.log('上传头像后重新获取资料成功:', profileData);
-          }
-        } catch (error) {
-          console.error('上传头像后重新获取资料失败:', error);
-        }
+        // 使用防抖函数延迟获取资料，避免并发问题
+        setTimeout(() => {
+          debouncedFetchData();
+        }, 500);
       } else {
-        antMessage.error({
-          content: info.file.response?.message || '头像上传失败，请稍后重试',
-          duration: 5,
-          style: {
-            fontSize: '16px',
-            marginTop: '20vh',
-          },
-        });
+        handleError(info.file.response?.message || '头像上传失败，请稍后重试');
       }
     } else if (info.file.status === 'error') {
-      antMessage.error({
-        content: '头像上传失败，请稍后重试',
-        duration: 5,
-        style: {
-          fontSize: '16px',
-          marginTop: '20vh',
-        },
-      });
+      // 上传出错，重置上传状态
+      setAvatarUploading(false);
+      handleError('头像上传失败，请稍后重试');
     }
   };
   
@@ -188,6 +212,9 @@ const ProfileManagement = () => {
     }
     
     if (info.file.status === 'done') {
+      // 上传完成，重置上传状态
+      setQrcodeUploading(false);
+      
       if (info.file.response && info.file.response.success) {
         // 优先使用服务器返回的最终值
         const finalQrcodePath = info.file.response.data.wechat_qrcode_final || info.file.response.data.file_path;
@@ -211,54 +238,17 @@ const ProfileManagement = () => {
           },
         });
         
-        // 立即重新获取用户完整资料，确保状态同步
-        try {
-          const profileRes = await getProfile();
-          if (profileRes.data) {
-            const profileData = profileRes.data;
-            
-            // 更新表单数据
-            profileForm.setFieldsValue({
-              username: profileData.username,
-              name: profileData.name,
-              phone: profileData.phone,
-              email: profileData.email,
-              company: profileData.company
-            });
-            
-            // 如果数据库中有头像和二维码，更新本地状态
-            if (profileData.avatar) {
-              setAvatarUrl(getImageUrl(profileData.avatar, `?t=${Date.now()}`));
-            }
-            
-            if (profileData.wechat_qrcode) {
-              setQrcodeUrl(getImageUrl(profileData.wechat_qrcode, `?t=${Date.now()}`));
-            }
-            
-            console.log('上传二维码后重新获取资料成功:', profileData);
-          }
-        } catch (error) {
-          console.error('上传二维码后重新获取资料失败:', error);
-        }
+        // 使用防抖函数延迟获取资料，避免并发问题
+        setTimeout(() => {
+          debouncedFetchData();
+        }, 500);
       } else {
-        antMessage.error({
-          content: info.file.response?.message || '二维码上传失败，请稍后重试',
-          duration: 5,
-          style: {
-            fontSize: '16px',
-            marginTop: '20vh',
-          },
-        });
+        handleError(info.file.response?.message || '二维码上传失败，请稍后重试');
       }
     } else if (info.file.status === 'error') {
-      antMessage.error({
-        content: '二维码上传失败，请稍后重试',
-        duration: 5,
-        style: {
-          fontSize: '16px',
-          marginTop: '20vh',
-        },
-      });
+      // 上传出错，重置上传状态
+      setQrcodeUploading(false);
+      handleError('二维码上传失败，请稍后重试');
     }
   };
   
@@ -765,6 +755,7 @@ const ProfileManagement = () => {
               headers={getUploadHeaders()}
               beforeUpload={beforeAvatarUpload}
               onChange={handleAvatarChange}
+              disabled={qrcodeUploading}
               data={{
                 entity_type: 'USER',
                 entity_id: user?.id,
@@ -780,12 +771,16 @@ const ProfileManagement = () => {
                   style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                   onError={(e) => {
                     console.error('头像加载失败:', e);
+                    
+                    // 重置图片地址以防止无限加载
+                    e.target.onerror = null;
+                    
                     // 增加错误计数，超过阈值后停止尝试加载
                     setAvatarErrorCount(prev => {
                       const newCount = prev + 1;
                       if (newCount >= 3) {
                         e.target.src = ''; // 只在第三次错误时设置为空
-                        antMessage.error('头像加载失败，请重新上传');
+                        handleError('头像加载失败，请重新上传');
                       }
                       return newCount;
                     });
@@ -797,7 +792,7 @@ const ProfileManagement = () => {
                 </div>
               )}
               <div className={styles.avatarOverlay}>
-                <span>选择头像</span>
+                <span>{avatarUploading ? '上传中...' : '选择头像'}</span>
               </div>
             </Upload>
           </div>
@@ -975,12 +970,16 @@ const ProfileManagement = () => {
                     className={styles.qrcodeImage}
                     onError={(e) => {
                       console.error('二维码加载失败:', e);
+                      
+                      // 重置图片地址以防止无限加载
+                      e.target.onerror = null;
+                      
                       // 增加错误计数，超过阈值后停止尝试加载
                       setQrcodeErrorCount(prev => {
                         const newCount = prev + 1;
                         if (newCount >= 3) {
                           e.target.src = ''; // 只在第三次错误时设置为空
-                          antMessage.error('二维码加载失败，请重新上传');
+                          handleError('二维码加载失败，请重新上传');
                         }
                         return newCount;
                       });
@@ -996,8 +995,25 @@ const ProfileManagement = () => {
                 showUploadList={false}
                 action={getUploadUrl()}
                 headers={getUploadHeaders()}
-                beforeUpload={beforeAvatarUpload}
+                beforeUpload={(file) => {
+                  const isImage = /\.(jpg|jpeg|png|gif)$/i.test(file.name);
+                  if (!isImage) {
+                    antMessage.error('只能上传JPG/PNG/JPEG/GIF格式图片!');
+                    return false;
+                  }
+                  
+                  const isLt20M = file.size / 1024 / 1024 < 20;
+                  if (!isLt20M) {
+                    antMessage.error('图片必须小于20MB!');
+                    return false;
+                  }
+                  
+                  // 设置上传状态为true
+                  setQrcodeUploading(true);
+                  return true;
+                }}
                 onChange={handleQrcodeUpload}
+                disabled={avatarUploading}
                 data={{
                   entity_type: 'USER',
                   entity_id: user?.id,
@@ -1005,7 +1021,9 @@ const ProfileManagement = () => {
                   replace_existing: 'true'
                 }}
               >
-                <Button type="primary">选择二维码</Button>
+                <Button type="primary" disabled={avatarUploading}>
+                  {qrcodeUploading ? '上传中...' : '选择二维码'}
+                </Button>
               </Upload>
               
               <div className={styles.qrcodeHint}>
